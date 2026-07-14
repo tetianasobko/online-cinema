@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Text, 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.models.base import Base
+from security.utils import generate_secure_token
 
 
 class UserGroupEnum(str, enum.Enum):
@@ -101,7 +102,9 @@ class TokenBaseModel(Base):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    token: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, default=generate_secure_token
+    )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
