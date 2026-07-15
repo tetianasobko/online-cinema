@@ -13,7 +13,7 @@ def validate_email(user_email: str) -> str:
     except email_validator.EmailNotValidError as error:
         raise ValueError(str(error)) from error
     else:
-        return email
+        return email.lower()
 
 
 def validate_password_strength(password: str) -> str:
