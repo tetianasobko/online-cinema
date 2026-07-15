@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
-from database.validators.accounts import validate_email, validate_password_strength
+from database.validators.accounts import (
+    validate_email,
+    validate_password_strength
+)
 
 
 class UserRegistrationRequestSchema(BaseModel):
@@ -24,3 +27,17 @@ class UserRegistrationResponseSchema(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+class UserActivationRequestSchema(BaseModel):
+    email: EmailStr
+    token: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return validate_email(str(value))
+
+
+class MessageResponseSchema(BaseModel):
+    message: str

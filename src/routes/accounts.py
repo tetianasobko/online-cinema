@@ -1,7 +1,11 @@
+from datetime import datetime, timezone
+from typing import Annotated
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from urllib.parse import urlencode
+from sqlalchemy.orm import joinedload
 
 from database.models import (
     ActivationTokenModel,
@@ -73,3 +77,59 @@ async def register_user(
     )
 
     return user
+
+
+@router.get(
+    "/activate",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def activate_account(
+    activation_data: Annotated[
+        schemas.UserActivationRequestSchema,
+        Depends(),
+    ],
+    db: AsyncSession = Depends(get_db),
+) -> schemas.MessageResponseSchema:
+    activation_token = await db.scalar(
+        select(ActivationTokenModel)
+        .options(joinedload(ActivationTokenModel.user))
+        .join(UserModel)
+        .where(
+            UserModel.email == str(activation_data.email),
+            ActivationTokenModel.token == activation_data.token,
+        )
+    )
+
+    if activation_token is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Invalid or expired activation token.",
+        )
+
+    expires_at = activation_token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at <= datetime.now(timezone.utc):
+        await db.delete(activation_token)
+        await db.commit()
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Invalid or expired activation token.",
+        )
+
+    user = activation_token.user
+    if user.is_active:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "User account is already active.",
+        )
+
+    user.is_active = True
+    await db.delete(activation_token)
+    await db.commit()
+
+    return schemas.MessageResponseSchema(
+        message="User account activated successfully."
+    )
