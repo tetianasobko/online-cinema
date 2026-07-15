@@ -20,6 +20,9 @@ import schemas
 
 
 router = APIRouter()
+ACTIVATION_RESEND_MESSAGE = (
+    "If the account can be activated, a new activation link has been sent."
+)
 
 
 @router.post(
@@ -132,4 +135,58 @@ async def activate_account(
 
     return schemas.MessageResponseSchema(
         message="User account activated successfully."
+    )
+
+
+@router.post(
+    "/activation/resend",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def resend_activation_link(
+    data: schemas.ActivationResendRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    email_sender: EmailSenderInterface = Depends(get_email_sender),
+) -> schemas.MessageResponseSchema:
+    user = await db.scalar(
+        select(UserModel)
+        .options(joinedload(UserModel.activation_token))
+        .where(UserModel.email == str(data.email))
+    )
+
+    if user is None or user.is_active:
+        return schemas.MessageResponseSchema(
+            message=ACTIVATION_RESEND_MESSAGE
+        )
+
+    if user.activation_token is not None:
+        await db.delete(user.activation_token)
+        await db.flush()
+
+    token = ActivationTokenModel(user_id=user.id)
+    db.add(token)
+
+    try:
+        await db.flush()
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    query = urlencode({"email": user.email, "token": token.token})
+    activation_link = (
+        f"http://127.0.0.1:8000/api/v1/accounts/activate?{query}"
+    )
+    background_tasks.add_task(
+        email_sender.send_activation_email,
+        user.email,
+        activation_link,
+    )
+
+    return schemas.MessageResponseSchema(
+        message=ACTIVATION_RESEND_MESSAGE
     )

@@ -39,5 +39,14 @@ class UserActivationRequestSchema(BaseModel):
         return validate_email(str(value))
 
 
+class ActivationResendRequestSchema(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return validate_email(str(value))
+
+
 class MessageResponseSchema(BaseModel):
     message: str

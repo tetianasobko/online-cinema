@@ -1,4 +1,5 @@
 from schemas.accounts import (
+    ActivationResendRequestSchema,
     MessageResponseSchema,
     UserActivationRequestSchema,
     UserRegistrationRequestSchema,
@@ -6,6 +7,7 @@ from schemas.accounts import (
 )
 
 __all__ = [
+    "ActivationResendRequestSchema",
     "MessageResponseSchema",
     "UserActivationRequestSchema",
     "UserRegistrationRequestSchema",
