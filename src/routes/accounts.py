@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from urllib.parse import urlencode
+
 from database.models import (
     ActivationTokenModel,
     UserGroupEnum,
@@ -8,11 +10,12 @@ from database.models import (
     UserModel,
 )
 from database.session import get_db
+from notifications import EmailSenderInterface, get_email_sender
 from security import hash_password
 import schemas
 
 
-router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
+router = APIRouter()
 
 
 @router.post(
@@ -22,7 +25,9 @@ router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 )
 async def register_user(
     data: schemas.UserRegistrationRequestSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    email_sender: EmailSenderInterface = Depends(get_email_sender),
 ) -> UserModel:
     email = str(data.email)
     if await db.scalar(select(UserModel).where(UserModel.email == email)):
@@ -58,5 +63,13 @@ async def register_user(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Something went wrong. Try again later."
         ) from e
+
+    query = urlencode({"email": user.email, "token": token.token})
+    activation_link = f"http://127.0.0.1:8000/api/v1/accounts/activate?{query}"
+    background_tasks.add_task(
+        email_sender.send_activation_email,
+        user.email,
+        activation_link,
+    )
 
     return user
