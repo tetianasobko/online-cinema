@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from config import Settings, get_jwt_auth_manager, get_settings
 from database.models import (
     ActivationTokenModel,
     RefreshTokenModel,
@@ -18,7 +19,6 @@ from database.session import get_db
 from notifications import EmailSenderInterface, get_email_sender
 from security import (
     JWTAuthManagerInterface,
-    get_jwt_auth_manager,
     hash_password,
     verify_password,
 )
@@ -207,6 +207,7 @@ async def login_user(
     data: schemas.UserLoginRequestSchema,
     db: AsyncSession = Depends(get_db),
     jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
+    settings: Settings = Depends(get_settings),
 ) -> schemas.UserLoginResponseSchema:
     user = await db.scalar(
         select(UserModel).where(UserModel.email == str(data.email))
@@ -230,7 +231,7 @@ async def login_user(
     refresh_jwt = jwt_manager.create_refresh_token({"user_id": user.id})
     refresh_token = RefreshTokenModel.create(
         user_id=user.id,
-        days_valid=7,
+        days_valid=settings.LOGIN_TIME_DAYS,
         token=refresh_jwt,
     )
     db.add(refresh_token)

@@ -1,17 +1,13 @@
-import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     AsyncSession, async_sessionmaker
 )
 
+from config import get_settings
 
-SQLITE_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite+aiosqlite:///./online_cinema.db",
-)
-
-engine = create_async_engine(SQLITE_DATABASE_URL, echo=False)
+settings = get_settings()
+engine = create_async_engine(settings.DATABASE_URL, echo=False)
 AsyncSQLiteSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,

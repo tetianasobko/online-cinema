@@ -1,22 +1,23 @@
-import os
 from email.message import EmailMessage
 
 import aiosmtplib
+from fastapi import Depends
 
+from config import Settings, get_settings
 from notifications.interfaces import EmailSenderInterface
 
 
 class SMTPEmailSender:
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
     async def send_activation_email(
         self,
         recipient: str,
         activation_link: str,
     ) -> None:
         message = EmailMessage()
-        message["From"] = os.getenv(
-            "MAIL_FROM",
-            "noreply@online-cinema.local",
-        )
+        message["From"] = self.settings.EMAIL_FROM
         message["To"] = recipient
         message["Subject"] = "Activate your Online Cinema account"
         message.set_content(
@@ -26,10 +27,12 @@ class SMTPEmailSender:
 
         await aiosmtplib.send(
             message,
-            hostname=os.getenv("SMTP_HOST", "localhost"),
-            port=int(os.getenv("SMTP_PORT", "1025")),
+            hostname=self.settings.EMAIL_HOST,
+            port=self.settings.EMAIL_PORT,
         )
 
 
-def get_email_sender() -> EmailSenderInterface:
-    return SMTPEmailSender()
+def get_email_sender(
+    settings: Settings = Depends(get_settings),
+) -> EmailSenderInterface:
+    return SMTPEmailSender(settings)

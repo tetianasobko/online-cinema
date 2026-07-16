@@ -1,10 +1,11 @@
-import os
 from celery import Celery
 
+from config import get_settings
 
+settings = get_settings()
 celery_app = Celery(
     "online_cinema",
-    broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
+    broker=settings.CELERY_BROKER_URL,
     include=["tasks.activation_tokens"],
 )
 

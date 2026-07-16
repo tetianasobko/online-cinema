@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from fastapi import Depends
 
 from config.settings import Settings
