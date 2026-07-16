@@ -250,3 +250,39 @@ async def login_user(
         access_token=access_token,
         refresh_token=refresh_jwt,
     )
+
+
+@router.post(
+    "/logout",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def logout_user(
+    data: schemas.UserLogoutRequestSchema,
+    db: AsyncSession = Depends(get_db),
+) -> schemas.MessageResponseSchema:
+    refresh_token = await db.scalar(
+        select(RefreshTokenModel).where(
+            RefreshTokenModel.token == data.refresh_token
+        )
+    )
+
+    if refresh_token is None:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Refresh token not found.",
+        )
+
+    try:
+        await db.delete(refresh_token)
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    return schemas.MessageResponseSchema(
+        message="Logged out successfully."
+    )

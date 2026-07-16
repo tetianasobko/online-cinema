@@ -4,6 +4,7 @@ from schemas.accounts import (
     UserActivationRequestSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
+    UserLogoutRequestSchema,
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "UserActivationRequestSchema",
     "UserLoginRequestSchema",
     "UserLoginResponseSchema",
+    "UserLogoutRequestSchema",
     "UserRegistrationRequestSchema",
     "UserRegistrationResponseSchema",
 ]
