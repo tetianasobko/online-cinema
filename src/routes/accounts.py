@@ -9,13 +9,19 @@ from sqlalchemy.orm import joinedload
 
 from database.models import (
     ActivationTokenModel,
+    RefreshTokenModel,
     UserGroupEnum,
     UserGroupModel,
     UserModel,
 )
 from database.session import get_db
 from notifications import EmailSenderInterface, get_email_sender
-from security import hash_password
+from security import (
+    JWTAuthManagerInterface,
+    get_jwt_auth_manager,
+    hash_password,
+    verify_password,
+)
 import schemas
 
 
@@ -189,4 +195,57 @@ async def resend_activation_link(
 
     return schemas.MessageResponseSchema(
         message=ACTIVATION_RESEND_MESSAGE
+    )
+
+
+@router.post(
+    "/login",
+    response_model=schemas.UserLoginResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def login_user(
+    data: schemas.UserLoginRequestSchema,
+    db: AsyncSession = Depends(get_db),
+    jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
+) -> schemas.UserLoginResponseSchema:
+    user = await db.scalar(
+        select(UserModel).where(UserModel.email == str(data.email))
+    )
+
+    if user is None or not verify_password(
+        data.password,
+        user.hashed_password,
+    ):
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Invalid email or password.",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "User account is not activated.",
+        )
+
+    refresh_jwt = jwt_manager.create_refresh_token({"user_id": user.id})
+    refresh_token = RefreshTokenModel.create(
+        user_id=user.id,
+        days_valid=7,
+        token=refresh_jwt,
+    )
+    db.add(refresh_token)
+
+    try:
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    access_token = jwt_manager.create_access_token({"user_id": user.id})
+    return schemas.UserLoginResponseSchema(
+        access_token=access_token,
+        refresh_token=refresh_jwt,
     )
