@@ -31,6 +31,26 @@ class SMTPEmailSender:
             port=self.settings.EMAIL_PORT,
         )
 
+    async def send_password_reset_email(
+        self,
+        recipient: str,
+        reset_link: str,
+    ) -> None:
+        message = EmailMessage()
+        message["From"] = self.settings.EMAIL_FROM
+        message["To"] = recipient
+        message["Subject"] = "Reset your Online Cinema password"
+        message.set_content(
+            "Reset your password within 24 hours using this link:\n"
+            f"{reset_link}"
+        )
+
+        await aiosmtplib.send(
+            message,
+            hostname=self.settings.EMAIL_HOST,
+            port=self.settings.EMAIL_PORT,
+        )
+
 
 def get_email_sender(
     settings: Settings = Depends(get_settings),
