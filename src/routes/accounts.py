@@ -22,6 +22,8 @@ from security import (
     hash_password,
     verify_password,
 )
+from security.exceptions import InvalidTokenError
+from security.http import get_token
 import schemas
 
 
@@ -285,4 +287,57 @@ async def logout_user(
 
     return schemas.MessageResponseSchema(
         message="Logged out successfully."
+    )
+
+
+@router.post(
+    "/password/change",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def change_password(
+    data: schemas.PasswordChangeRequestSchema,
+    token: str = Depends(get_token),
+    db: AsyncSession = Depends(get_db),
+    jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
+) -> schemas.MessageResponseSchema:
+    try:
+        payload = jwt_manager.decode_access_token(token)
+        user_id = payload.get("user_id")
+    except InvalidTokenError as error:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Invalid or expired access token.",
+        ) from error
+
+    current_user = await db.scalar(
+        select(UserModel).where(UserModel.id == user_id)
+    )
+    if current_user is None:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Invalid or expired access token.",
+        )
+
+    if not verify_password(
+        data.old_password,
+        current_user.hashed_password,
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Old password is incorrect.",
+        )
+
+    current_user.hashed_password = hash_password(data.new_password)
+    try:
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    return schemas.MessageResponseSchema(
+        message="Password changed successfully."
     )
