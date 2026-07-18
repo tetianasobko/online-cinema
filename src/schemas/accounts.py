@@ -89,3 +89,19 @@ class PasswordResetRequestSchema(BaseModel):
     @classmethod
     def normalize_email(cls, value: EmailStr) -> str:
         return validate_email(str(value))
+
+
+class PasswordResetCompleteRequestSchema(BaseModel):
+    email: EmailStr
+    token: str
+    new_password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return validate_email(str(value))
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        return validate_password_strength(value)

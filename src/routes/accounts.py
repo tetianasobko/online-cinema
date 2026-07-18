@@ -3,7 +3,7 @@ from typing import Annotated
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -399,4 +399,65 @@ async def request_password_reset(
 
     return schemas.MessageResponseSchema(
         message=PASSWORD_RESET_MESSAGE
+    )
+
+
+@router.post(
+    "/password/reset/complete",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def complete_password_reset(
+    data: schemas.PasswordResetCompleteRequestSchema,
+    db: AsyncSession = Depends(get_db),
+) -> schemas.MessageResponseSchema:
+    reset_token = await db.scalar(
+        select(PasswordResetTokenModel)
+        .options(joinedload(PasswordResetTokenModel.user))
+        .join(UserModel)
+        .where(
+            UserModel.email == str(data.email),
+            PasswordResetTokenModel.token == data.token,
+            UserModel.is_active.is_(True),
+        )
+    )
+
+    if reset_token is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Invalid or expired password reset token.",
+        )
+
+    expires_at = reset_token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at <= datetime.now(timezone.utc):
+        await db.delete(reset_token)
+        await db.commit()
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Invalid or expired password reset token.",
+        )
+
+    user = reset_token.user
+    user.hashed_password = hash_password(data.new_password)
+
+    try:
+        await db.delete(reset_token)
+        await db.execute(
+            delete(RefreshTokenModel).where(
+                RefreshTokenModel.user_id == user.id
+            )
+        )
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    return schemas.MessageResponseSchema(
+        message="Password reset successfully."
     )
