@@ -80,3 +80,12 @@ class PasswordChangeRequestSchema(BaseModel):
     @classmethod
     def validate_new_password(cls, value: str) -> str:
         return validate_password_strength(value)
+
+
+class PasswordResetRequestSchema(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return validate_email(str(value))

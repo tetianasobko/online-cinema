@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from config import Settings, get_jwt_auth_manager, get_settings
 from database.models import (
     ActivationTokenModel,
+    PasswordResetTokenModel,
     RefreshTokenModel,
     UserGroupEnum,
     UserGroupModel,
@@ -30,6 +31,10 @@ import schemas
 router = APIRouter()
 ACTIVATION_RESEND_MESSAGE = (
     "If the account can be activated, a new activation link has been sent."
+)
+PASSWORD_RESET_MESSAGE = (
+    "If the account is registered and active, "
+    "a password reset link has been sent."
 )
 
 
@@ -340,4 +345,58 @@ async def change_password(
 
     return schemas.MessageResponseSchema(
         message="Password changed successfully."
+    )
+
+
+@router.post(
+    "/password/reset/request",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def request_password_reset(
+    data: schemas.PasswordResetRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    email_sender: EmailSenderInterface = Depends(get_email_sender),
+) -> schemas.MessageResponseSchema:
+    user = await db.scalar(
+        select(UserModel)
+        .options(joinedload(UserModel.password_reset_token))
+        .where(UserModel.email == str(data.email))
+    )
+
+    if user is None or not user.is_active:
+        return schemas.MessageResponseSchema(
+            message=PASSWORD_RESET_MESSAGE
+        )
+
+    try:
+        if user.password_reset_token is not None:
+            await db.delete(user.password_reset_token)
+            await db.flush()
+
+        reset_token = PasswordResetTokenModel(user_id=user.id)
+        db.add(reset_token)
+        await db.flush()
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    query = urlencode({"email": user.email, "token": reset_token.token})
+    reset_link = (
+        "http://127.0.0.1:8000/api/v1/accounts/password/reset/complete"
+        f"?{query}"
+    )
+    background_tasks.add_task(
+        email_sender.send_password_reset_email,
+        user.email,
+        reset_link,
+    )
+
+    return schemas.MessageResponseSchema(
+        message=PASSWORD_RESET_MESSAGE
     )
