@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
+from database.models import UserGroupEnum
 from database.validators.accounts import (
     validate_email,
     validate_password_strength
@@ -114,3 +115,7 @@ class PasswordResetCompleteRequestSchema(BaseModel):
     @classmethod
     def validate_new_password(cls, value: str) -> str:
         return validate_password_strength(value)
+
+
+class UserGroupUpdateSchema(BaseModel):
+    group: UserGroupEnum

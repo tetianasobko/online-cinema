@@ -24,6 +24,7 @@ from security import (
     verify_password,
 )
 from security.exceptions import InvalidTokenError
+from security.authorization import require_admin
 from security.http import get_token
 import schemas
 
@@ -508,4 +509,87 @@ async def complete_password_reset(
 
     return schemas.MessageResponseSchema(
         message="Password reset successfully."
+    )
+
+
+@router.patch(
+    "/admin/users/{user_id}/group",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def update_user_group(
+    user_id: int,
+    data: schemas.UserGroupUpdateSchema,
+    _: UserModel = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> schemas.MessageResponseSchema:
+    user = await db.scalar(
+        select(UserModel).where(UserModel.id == user_id)
+    )
+    if user is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "User not found.",
+        )
+
+    group = await db.scalar(
+        select(UserGroupModel).where(UserGroupModel.name == data.group)
+    )
+    if group is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "User group not found.",
+        )
+
+    user.group_id = group.id
+    try:
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    return schemas.MessageResponseSchema(
+        message=f"User group changed to {data.group.value}."
+    )
+
+
+@router.post(
+    "/admin/users/{user_id}/activate",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def activate_user_by_admin(
+    user_id: int,
+    _: UserModel = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> schemas.MessageResponseSchema:
+    user = await db.scalar(
+        select(UserModel).where(UserModel.id == user_id)
+    )
+    if user is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "User not found.",
+        )
+
+    user.is_active = True
+    try:
+        await db.execute(
+            delete(ActivationTokenModel).where(
+                ActivationTokenModel.user_id == user.id
+            )
+        )
+        await db.commit()
+    except Exception as error:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Something went wrong. Try again later.",
+        ) from error
+
+    return schemas.MessageResponseSchema(
+        message="User account activated successfully."
     )
