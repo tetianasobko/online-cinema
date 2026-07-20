@@ -83,3 +83,7 @@ class MovieDetailSchema(MovieListItemSchema):
     certification: MovieRelatedItemSchema
     directors: list[MovieRelatedItemSchema]
     stars: list[MovieRelatedItemSchema]
+
+
+class GenreWithMovieCountSchema(MovieRelatedItemSchema):
+    movie_count: int
