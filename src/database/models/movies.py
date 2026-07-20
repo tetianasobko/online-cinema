@@ -1,9 +1,11 @@
+import enum
 from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     DECIMAL,
     Column,
+    Enum,
     Float,
     ForeignKey,
     Integer,
@@ -16,6 +18,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.models.base import Base
+
+
+class MovieReactionEnum(str, enum.Enum):
+    LIKE = "like"
+    DISLIKE = "dislike"
 
 
 MovieGenresModel = Table(
@@ -192,3 +199,30 @@ class MovieModel(Base):
         secondary=FavoriteMoviesModel,
         back_populates="favorite_movies",
     )
+    reactions: Mapped[list["MovieReactionModel"]] = relationship(
+        back_populates="movie",
+        cascade="all, delete-orphan",
+    )
+
+
+class MovieReactionModel(Base):
+    __tablename__ = "movie_reactions"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    reaction: Mapped[MovieReactionEnum] = mapped_column(
+        Enum(MovieReactionEnum), nullable=False
+    )
+
+    user: Mapped["UserModel"] = relationship(
+        back_populates="movie_reactions"
+    )
+    movie: Mapped["MovieModel"] = relationship(back_populates="reactions")

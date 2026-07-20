@@ -84,6 +84,10 @@ class UserModel(Base):
         secondary="favorite_movies",
         back_populates="favorited_by",
     )
+    movie_reactions: Mapped[list["MovieReactionModel"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return (
