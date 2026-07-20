@@ -1,7 +1,20 @@
 from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel
+
+
+class MovieSortField(str, Enum):
+    PRICE = "price"
+    YEAR = "year"
+    IMDB = "imdb"
+    POPULARITY = "popularity"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
 
 
 class MovieRelatedItemSchema(BaseModel):
