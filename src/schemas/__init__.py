@@ -14,10 +14,20 @@ from schemas.accounts import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
 )
+from schemas.movies import (
+    MovieDetailSchema,
+    MovieListItemSchema,
+    MovieListResponseSchema,
+    MovieRelatedItemSchema,
+)
 
 __all__ = [
     "ActivationResendRequestSchema",
     "MessageResponseSchema",
+    "MovieDetailSchema",
+    "MovieListItemSchema",
+    "MovieListResponseSchema",
+    "MovieRelatedItemSchema",
     "PasswordChangeRequestSchema",
     "PasswordResetRequestSchema",
     "PasswordResetCompleteRequestSchema",

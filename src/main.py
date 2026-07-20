@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from database.populate import seed_user_groups
 from database.session import AsyncSQLiteSessionLocal
-from routes import accounts_router
+from routes import accounts_router, movies_router
 
 
 @asynccontextmanager
@@ -25,4 +25,10 @@ app.include_router(
     accounts_router,
     prefix=f"{api_version_prefix}/accounts",
     tags=["accounts"]
+)
+
+app.include_router(
+    movies_router,
+    prefix=f"{api_version_prefix}/movies",
+    tags=["movies"],
 )
