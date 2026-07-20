@@ -15,6 +15,7 @@ from schemas.accounts import (
     UserRegistrationResponseSchema,
 )
 from schemas.movies import (
+    MovieCatalogQuerySchema,
     MovieDetailSchema,
     MovieListItemSchema,
     MovieListResponseSchema,
@@ -26,6 +27,7 @@ from schemas.movies import (
 __all__ = [
     "ActivationResendRequestSchema",
     "MessageResponseSchema",
+    "MovieCatalogQuerySchema",
     "MovieDetailSchema",
     "MovieListItemSchema",
     "MovieListResponseSchema",
