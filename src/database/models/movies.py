@@ -72,6 +72,24 @@ MovieStarsModel = Table(
 )
 
 
+FavoriteMoviesModel = Table(
+    "favorite_movies",
+    Base.metadata,
+    Column(
+        "user_id",
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
+    Column(
+        "movie_id",
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
+)
+
+
 class GenreModel(Base):
     __tablename__ = "genres"
 
@@ -169,4 +187,8 @@ class MovieModel(Base):
     stars: Mapped[list["StarModel"]] = relationship(
         secondary=MovieStarsModel,
         back_populates="movies",
+    )
+    favorited_by: Mapped[list["UserModel"]] = relationship(
+        secondary=FavoriteMoviesModel,
+        back_populates="favorite_movies",
     )

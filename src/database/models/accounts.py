@@ -80,6 +80,10 @@ class UserModel(Base):
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    favorite_movies: Mapped[list["MovieModel"]] = relationship(
+        secondary="favorite_movies",
+        back_populates="favorited_by",
+    )
 
     def __repr__(self) -> str:
         return (

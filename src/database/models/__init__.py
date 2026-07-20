@@ -12,6 +12,7 @@ from database.models.base import Base
 from database.models.movies import (
     CertificationModel,
     DirectorModel,
+    FavoriteMoviesModel,
     GenreModel,
     MovieDirectorsModel,
     MovieGenresModel,
@@ -25,6 +26,7 @@ __all__ = [
     "Base",
     "CertificationModel",
     "DirectorModel",
+    "FavoriteMoviesModel",
     "GenderEnum",
     "GenreModel",
     "MovieDirectorsModel",
