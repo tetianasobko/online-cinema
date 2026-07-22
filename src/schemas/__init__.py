@@ -21,6 +21,8 @@ from schemas.movies import (
     MovieListItemSchema,
     MovieListResponseSchema,
     MovieRelatedItemSchema,
+    MovieReactionRequestSchema,
+    MovieReactionResponseSchema,
     MovieSortField,
     SortOrder,
 )
@@ -34,6 +36,8 @@ __all__ = [
     "MovieListItemSchema",
     "MovieListResponseSchema",
     "MovieRelatedItemSchema",
+    "MovieReactionRequestSchema",
+    "MovieReactionResponseSchema",
     "MovieSortField",
     "PasswordChangeRequestSchema",
     "PasswordResetRequestSchema",

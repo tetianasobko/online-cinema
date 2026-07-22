@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
+from database.models import MovieReactionEnum
+
 
 class MovieSortField(str, Enum):
     PRICE = "price"
@@ -83,7 +85,18 @@ class MovieDetailSchema(MovieListItemSchema):
     certification: MovieRelatedItemSchema
     directors: list[MovieRelatedItemSchema]
     stars: list[MovieRelatedItemSchema]
+    likes_count: int = 0
+    dislikes_count: int = 0
 
 
 class GenreWithMovieCountSchema(MovieRelatedItemSchema):
     movie_count: int
+
+
+class MovieReactionRequestSchema(BaseModel):
+    reaction: MovieReactionEnum
+
+
+class MovieReactionResponseSchema(BaseModel):
+    message: str
+    reaction: MovieReactionEnum | None

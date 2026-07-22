@@ -9,6 +9,7 @@ from routes import (
     favorites_router,
     genres_router,
     movies_router,
+    reactions_router,
 )
 
 
@@ -48,4 +49,10 @@ app.include_router(
     favorites_router,
     prefix=f"{api_version_prefix}/favorites",
     tags=["favorites"],
+)
+
+app.include_router(
+    reactions_router,
+    prefix=f"{api_version_prefix}/movies",
+    tags=["movie reactions"],
 )

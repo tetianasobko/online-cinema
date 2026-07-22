@@ -3,11 +3,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from database.models import MovieModel
+from database.models import MovieModel, MovieReactionEnum, MovieReactionModel
 from database.queries import get_movie_page
 from database.session import get_db
 from schemas.movies import (
@@ -73,4 +73,21 @@ async def get_movie_detail(
             detail="Movie not found.",
         )
 
-    return MovieDetailSchema.model_validate(movie)
+    reaction_counts = await db.execute(
+        select(
+            func.count().filter(
+                MovieReactionModel.reaction == MovieReactionEnum.LIKE
+            ),
+            func.count().filter(
+                MovieReactionModel.reaction == MovieReactionEnum.DISLIKE
+            ),
+        ).where(MovieReactionModel.movie_id == movie.id)
+    )
+    likes_count, dislikes_count = reaction_counts.one()
+    detail = MovieDetailSchema.model_validate(movie)
+    return detail.model_copy(
+        update={
+            "likes_count": likes_count,
+            "dislikes_count": dislikes_count,
+        }
+    )
