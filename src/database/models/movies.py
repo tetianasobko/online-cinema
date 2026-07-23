@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     DECIMAL,
+    CheckConstraint,
     Column,
     Enum,
     Float,
@@ -203,6 +204,10 @@ class MovieModel(Base):
         back_populates="movie",
         cascade="all, delete-orphan",
     )
+    ratings: Mapped[list["MovieRatingModel"]] = relationship(
+        back_populates="movie",
+        cascade="all, delete-orphan",
+    )
 
 
 class MovieReactionModel(Base):
@@ -226,3 +231,28 @@ class MovieReactionModel(Base):
         back_populates="movie_reactions"
     )
     movie: Mapped["MovieModel"] = relationship(back_populates="reactions")
+
+
+class MovieRatingModel(Base):
+    __tablename__ = "movie_ratings"
+    __table_args__ = (
+        CheckConstraint(
+            "rating >= 1 AND rating <= 10",
+            name="check_movie_rating_range",
+        ),
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    user: Mapped["UserModel"] = relationship(back_populates="movie_ratings")
+    movie: Mapped["MovieModel"] = relationship(back_populates="ratings")

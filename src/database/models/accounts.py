@@ -88,6 +88,10 @@ class UserModel(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    movie_ratings: Mapped[list["MovieRatingModel"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return (
