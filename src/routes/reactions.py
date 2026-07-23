@@ -99,14 +99,13 @@ async def set_movie_reaction(
 
 @router.delete(
     "/{movie_uuid}/reaction",
-    response_model=MovieReactionResponseSchema,
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def remove_movie_reaction(
     movie_uuid: UUID,
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> MovieReactionResponseSchema:
+) -> None:
     movie_id = await _get_movie_id(movie_uuid, db)
     reaction = await _get_reaction(user.id, movie_id, db)
 
@@ -118,7 +117,3 @@ async def remove_movie_reaction(
 
     await db.delete(reaction)
     await db.commit()
-    return MovieReactionResponseSchema(
-        message="Movie reaction removed.",
-        reaction=None,
-    )
