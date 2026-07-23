@@ -23,6 +23,8 @@ from schemas.movies import (
     MovieRelatedItemSchema,
     MovieReactionRequestSchema,
     MovieReactionResponseSchema,
+    MovieRatingRequestSchema,
+    MovieRatingResponseSchema,
     MovieSortField,
     SortOrder,
 )
@@ -38,6 +40,8 @@ __all__ = [
     "MovieRelatedItemSchema",
     "MovieReactionRequestSchema",
     "MovieReactionResponseSchema",
+    "MovieRatingRequestSchema",
+    "MovieRatingResponseSchema",
     "MovieSortField",
     "PasswordChangeRequestSchema",
     "PasswordResetRequestSchema",

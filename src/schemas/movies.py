@@ -87,6 +87,8 @@ class MovieDetailSchema(MovieListItemSchema):
     stars: list[MovieRelatedItemSchema]
     likes_count: int = 0
     dislikes_count: int = 0
+    average_rating: float | None = None
+    ratings_count: int = 0
 
 
 class GenreWithMovieCountSchema(MovieRelatedItemSchema):
@@ -100,3 +102,12 @@ class MovieReactionRequestSchema(BaseModel):
 class MovieReactionResponseSchema(BaseModel):
     message: str
     reaction: MovieReactionEnum | None
+
+
+class MovieRatingRequestSchema(BaseModel):
+    rating: int = Field(ge=1, le=10)
+
+
+class MovieRatingResponseSchema(BaseModel):
+    message: str
+    rating: int | None
