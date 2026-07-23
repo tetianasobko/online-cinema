@@ -7,7 +7,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from database.models import MovieModel, MovieReactionEnum, MovieReactionModel
+from database.models import (
+    MovieModel,
+    MovieRatingModel,
+    MovieReactionEnum,
+    MovieReactionModel,
+)
 from database.queries import get_movie_page
 from database.session import get_db
 from schemas.movies import (
@@ -84,10 +89,23 @@ async def get_movie_detail(
         ).where(MovieReactionModel.movie_id == movie.id)
     )
     likes_count, dislikes_count = reaction_counts.one()
+    rating_stats = await db.execute(
+        select(
+            func.avg(MovieRatingModel.rating),
+            func.count(MovieRatingModel.rating),
+        ).where(MovieRatingModel.movie_id == movie.id)
+    )
+    average_rating, ratings_count = rating_stats.one()
     detail = MovieDetailSchema.model_validate(movie)
     return detail.model_copy(
         update={
             "likes_count": likes_count,
             "dislikes_count": dislikes_count,
+            "average_rating": (
+                round(float(average_rating), 2)
+                if average_rating is not None
+                else None
+            ),
+            "ratings_count": ratings_count,
         }
     )
