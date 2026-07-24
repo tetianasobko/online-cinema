@@ -33,6 +33,11 @@ from schemas.movies import (
     SortOrder,
 )
 from schemas.notifications import NotificationListSchema, NotificationSchema
+from schemas.moderator import (
+    MovieCreateSchema,
+    MovieManagementSchema,
+    MovieUpdateSchema,
+)
 
 __all__ = [
     "ActivationResendRequestSchema",
@@ -41,17 +46,20 @@ __all__ = [
     "MovieCommentListSchema",
     "MovieCommentReplySchema",
     "MovieCommentSchema",
+    "MovieCreateSchema",
     "GenreWithMovieCountSchema",
     "MovieCatalogQuerySchema",
     "MovieDetailSchema",
     "MovieListItemSchema",
     "MovieListResponseSchema",
+    "MovieManagementSchema",
     "MovieRelatedItemSchema",
     "MovieReactionRequestSchema",
     "MovieReactionResponseSchema",
     "MovieRatingRequestSchema",
     "MovieRatingResponseSchema",
     "MovieSortField",
+    "MovieUpdateSchema",
     "NotificationListSchema",
     "NotificationSchema",
     "PasswordChangeRequestSchema",
