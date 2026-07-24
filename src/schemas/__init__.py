@@ -34,6 +34,9 @@ from schemas.movies import (
 )
 from schemas.notifications import NotificationListSchema, NotificationSchema
 from schemas.moderator import (
+    GenreCreateSchema,
+    GenreManagementSchema,
+    GenreUpdateSchema,
     MovieCreateSchema,
     MovieManagementSchema,
     MovieUpdateSchema,
@@ -48,6 +51,9 @@ __all__ = [
     "MovieCommentSchema",
     "MovieCreateSchema",
     "GenreWithMovieCountSchema",
+    "GenreCreateSchema",
+    "GenreManagementSchema",
+    "GenreUpdateSchema",
     "MovieCatalogQuerySchema",
     "MovieDetailSchema",
     "MovieListItemSchema",

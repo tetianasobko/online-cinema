@@ -6,6 +6,29 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from schemas.movies import MovieRelatedItemSchema
 
 
+class GenreCreateSchema(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Genre name cannot be empty.")
+        return value
+
+
+class GenreUpdateSchema(GenreCreateSchema):
+    pass
+
+
+class GenreManagementSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
 class MovieCreateSchema(BaseModel):
     name: str = Field(min_length=1, max_length=250)
     year: int = Field(ge=1888)
