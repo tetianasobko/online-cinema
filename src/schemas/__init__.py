@@ -40,6 +40,8 @@ from schemas.movies import (
 )
 from schemas.notifications import NotificationListSchema, NotificationSchema
 from schemas.orders import (
+    ExcludedMovieSchema,
+    OrderCreateResponseSchema,
     OrderItemSchema,
     OrderListSchema,
     OrderMovieSchema,
@@ -72,6 +74,7 @@ __all__ = [
     "DirectorCreateSchema",
     "DirectorManagementSchema",
     "DirectorUpdateSchema",
+    "ExcludedMovieSchema",
     "MessageResponseSchema",
     "MovieCommentCreateSchema",
     "MovieCommentListSchema",
@@ -96,6 +99,7 @@ __all__ = [
     "MovieUpdateSchema",
     "NotificationListSchema",
     "NotificationSchema",
+    "OrderCreateResponseSchema",
     "OrderItemSchema",
     "OrderListSchema",
     "OrderMovieSchema",

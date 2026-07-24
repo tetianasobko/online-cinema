@@ -34,3 +34,14 @@ class OrderSchema(BaseModel):
 
 class OrderListSchema(BaseModel):
     orders: list[OrderSchema]
+
+
+class ExcludedMovieSchema(BaseModel):
+    uuid: UUID
+    name: str
+    reason: str
+
+
+class OrderCreateResponseSchema(BaseModel):
+    order: OrderSchema
+    excluded_movies: list[ExcludedMovieSchema]
