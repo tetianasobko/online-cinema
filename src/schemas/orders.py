@@ -37,7 +37,7 @@ class OrderListSchema(BaseModel):
 
 
 class ExcludedMovieSchema(BaseModel):
-    uuid: UUID
+    uuid: UUID | None
     name: str
     reason: str
 
