@@ -6,6 +6,7 @@ from database.populate import seed_user_groups
 from database.session import AsyncSQLiteSessionLocal
 from routes import (
     accounts_router,
+    comment_likes_router,
     comments_router,
     favorites_router,
     genres_router,
@@ -69,4 +70,10 @@ app.include_router(
     comments_router,
     prefix=api_version_prefix,
     tags=["movie comments"],
+)
+
+app.include_router(
+    comment_likes_router,
+    prefix=api_version_prefix,
+    tags=["comment likes"],
 )
