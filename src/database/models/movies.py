@@ -1,4 +1,5 @@
 import enum
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -6,6 +7,7 @@ from sqlalchemy import (
     DECIMAL,
     CheckConstraint,
     Column,
+    DateTime,
     Enum,
     Float,
     ForeignKey,
@@ -15,6 +17,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -208,6 +211,10 @@ class MovieModel(Base):
         back_populates="movie",
         cascade="all, delete-orphan",
     )
+    comments: Mapped[list["MovieCommentModel"]] = relationship(
+        back_populates="movie",
+        cascade="all, delete-orphan",
+    )
 
 
 class MovieReactionModel(Base):
@@ -256,3 +263,40 @@ class MovieRatingModel(Base):
 
     user: Mapped["UserModel"] = relationship(back_populates="movie_ratings")
     movie: Mapped["MovieModel"] = relationship(back_populates="ratings")
+
+
+class MovieCommentModel(Base):
+    __tablename__ = "movie_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE"), nullable=False
+    )
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("movie_comments.id", ondelete="CASCADE")
+    )
+
+    user: Mapped["UserModel"] = relationship(back_populates="movie_comments")
+    movie: Mapped["MovieModel"] = relationship(back_populates="comments")
+    parent: Mapped["MovieCommentModel | None"] = relationship(
+        remote_side=[id],
+        back_populates="replies",
+    )
+    replies: Mapped[list["MovieCommentModel"]] = relationship(
+        back_populates="parent",
+        cascade="all, delete-orphan",
+        order_by="MovieCommentModel.created_at",
+    )
