@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models import MovieCommentModel, UserModel
+from database.models import CommentLikesModel, MovieCommentModel, UserModel
 from database.session import get_db
 from routes.dependencies import get_movie_id_or_404
 from schemas.movies import (
@@ -47,12 +47,49 @@ async def get_movie_comments(
         .limit(per_page)
     )
     comments = list((await db.scalars(statement)).all())
+    comment_ids = [
+        comment_id
+        for comment in comments
+        for comment_id in (
+            comment.id,
+            *(reply.id for reply in comment.replies),
+        )
+    ]
+    likes_by_comment_id: dict[int, int] = {}
+    if comment_ids:
+        likes_statement = (
+            select(
+                CommentLikesModel.c.comment_id,
+                func.count(CommentLikesModel.c.user_id),
+            )
+            .where(CommentLikesModel.c.comment_id.in_(comment_ids))
+            .group_by(CommentLikesModel.c.comment_id)
+        )
+        likes_by_comment_id = dict(
+            (await db.execute(likes_statement)).tuples().all()
+        )
+
+    comment_schemas = []
+    for comment in comments:
+        replies = [
+            MovieCommentReplySchema.model_validate(reply).model_copy(
+                update={
+                    "likes_count": likes_by_comment_id.get(reply.id, 0)
+                }
+            )
+            for reply in comment.replies
+        ]
+        comment_schemas.append(
+            MovieCommentSchema.model_validate(comment).model_copy(
+                update={
+                    "likes_count": likes_by_comment_id.get(comment.id, 0),
+                    "replies": replies,
+                }
+            )
+        )
 
     return MovieCommentListSchema(
-        comments=[
-            MovieCommentSchema.model_validate(comment)
-            for comment in comments
-        ],
+        comments=comment_schemas,
         page=page,
         per_page=per_page,
         total_pages=ceil(total_items / per_page) if total_items else 0,
