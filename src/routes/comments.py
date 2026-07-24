@@ -5,7 +5,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models import CommentLikesModel, MovieCommentModel, UserModel
+from database.models import (
+    CommentLikesModel,
+    MovieCommentModel,
+    NotificationModel,
+    NotificationTypeEnum,
+    UserModel,
+)
 from database.session import get_db
 from routes.dependencies import get_movie_id_or_404
 from schemas.movies import (
@@ -157,6 +163,15 @@ async def create_comment_reply(
         replies=[],
     )
     db.add(reply)
+    if parent.user_id != user.id:
+        db.add(
+            NotificationModel(
+                type=NotificationTypeEnum.COMMENT_REPLY,
+                recipient_id=parent.user_id,
+                actor_id=user.id,
+                comment=reply,
+            )
+        )
     await db.commit()
     await db.refresh(reply)
     return MovieCommentReplySchema.model_validate(reply)

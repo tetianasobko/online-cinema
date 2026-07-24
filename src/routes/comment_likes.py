@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import CommentLikesModel, MovieCommentModel, UserModel
+from database.models import (
+    CommentLikesModel,
+    MovieCommentModel,
+    NotificationModel,
+    NotificationTypeEnum,
+    UserModel,
+)
 from database.session import get_db
 from schemas.accounts import MessageResponseSchema
 from security.authorization import get_current_user
@@ -48,7 +54,7 @@ async def like_comment(
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponseSchema:
-    await _get_comment_or_404(comment_id, db)
+    comment = await _get_comment_or_404(comment_id, db)
     if await _comment_like_exists(comment_id, user.id, db):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -61,6 +67,15 @@ async def like_comment(
             comment_id=comment_id,
         )
     )
+    if comment.user_id != user.id:
+        db.add(
+            NotificationModel(
+                type=NotificationTypeEnum.COMMENT_LIKE,
+                recipient_id=comment.user_id,
+                actor_id=user.id,
+                comment_id=comment.id,
+            )
+        )
     await db.commit()
     return MessageResponseSchema(message="Comment liked.")
 
