@@ -15,7 +15,11 @@ from database.models import (
     OrderStatusEnum,
 )
 from database.session import get_db
-from routes.dependencies import get_movie_or_404, get_or_create_cart
+from routes.dependencies import (
+    get_movie_id_or_404,
+    get_movie_or_404,
+    get_or_create_cart,
+)
 from schemas.accounts import MessageResponseSchema
 from schemas.carts import CartItemSchema, CartSchema
 
@@ -81,6 +85,33 @@ async def add_movie_to_cart(
         ) from error
 
     return MessageResponseSchema(message="Movie added to the cart.")
+
+
+@router.delete(
+    "/{movie_uuid}",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def remove_movie_from_cart(
+    movie_id: int = Depends(get_movie_id_or_404),
+    cart: CartModel = Depends(get_or_create_cart),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    cart_item = await db.scalar(
+        select(CartItemModel).where(
+            CartItemModel.cart_id == cart.id,
+            CartItemModel.movie_id == movie_id,
+        )
+    )
+    if cart_item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This movie is not in the cart.",
+        )
+
+    await db.delete(cart_item)
+    await db.commit()
+    return MessageResponseSchema(message="Movie removed from the cart.")
 
 
 @router.get(
