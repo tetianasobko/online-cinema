@@ -240,6 +240,14 @@ class MovieModel(Base):
         back_populates="movie",
         cascade="all, delete-orphan",
     )
+    cart_items: Mapped[list["CartItemModel"]] = relationship(
+        back_populates="movie",
+        passive_deletes=True,
+    )
+    order_items: Mapped[list["OrderItemModel"]] = relationship(
+        back_populates="movie",
+        passive_deletes=True,
+    )
 
 
 class MovieReactionModel(Base):
