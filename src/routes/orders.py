@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from database.models import (
     CartItemModel,
@@ -18,12 +19,41 @@ from routes.dependencies import get_or_create_cart
 from schemas.orders import (
     ExcludedMovieSchema,
     OrderCreateResponseSchema,
+    OrderListSchema,
     OrderSchema,
 )
 from security.authorization import get_current_user
 
 
 router = APIRouter()
+
+
+@router.get(
+    "/",
+    response_model=OrderListSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def get_orders(
+    user: UserModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> OrderListSchema:
+    orders = list(
+        (
+            await db.scalars(
+                select(OrderModel)
+                .options(
+                    selectinload(OrderModel.items).selectinload(
+                        OrderItemModel.movie
+                    )
+                )
+                .where(OrderModel.user_id == user.id)
+                .order_by(OrderModel.created_at.desc(), OrderModel.id.desc())
+            )
+        ).all()
+    )
+    return OrderListSchema(
+        orders=[OrderSchema.model_validate(order) for order in orders]
+    )
 
 
 @router.post(
