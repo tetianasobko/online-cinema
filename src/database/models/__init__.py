@@ -9,6 +9,7 @@ from database.models.accounts import (
     UserProfileModel,
 )
 from database.models.base import Base
+from database.models.carts import CartItemModel, CartModel
 from database.models.movies import (
     CertificationModel,
     CommentLikesModel,
@@ -31,6 +32,8 @@ from database.models.movies import (
 __all__ = [
     "ActivationTokenModel",
     "Base",
+    "CartItemModel",
+    "CartModel",
     "CertificationModel",
     "CommentLikesModel",
     "DirectorModel",
