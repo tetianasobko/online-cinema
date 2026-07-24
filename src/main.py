@@ -11,6 +11,7 @@ from routes import (
     favorites_router,
     genres_router,
     movies_router,
+    moderator_genres_router,
     moderator_movies_router,
     notifications_router,
     ratings_router,
@@ -84,6 +85,12 @@ app.include_router(
     notifications_router,
     prefix=f"{api_version_prefix}/notifications",
     tags=["notifications"],
+)
+
+app.include_router(
+    moderator_genres_router,
+    prefix=f"{api_version_prefix}/admin/genres",
+    tags=["moderator genre management"],
 )
 
 app.include_router(
