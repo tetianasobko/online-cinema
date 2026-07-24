@@ -18,6 +18,7 @@ from routes import (
     moderator_genres_router,
     moderator_movies_router,
     notifications_router,
+    orders_router,
     ratings_router,
     reactions_router,
 )
@@ -95,6 +96,12 @@ app.include_router(
     comment_likes_router,
     prefix=api_version_prefix,
     tags=["comment likes"],
+)
+
+app.include_router(
+    orders_router,
+    prefix=f"{api_version_prefix}/orders",
+    tags=["orders"],
 )
 
 app.include_router(

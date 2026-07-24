@@ -3,6 +3,7 @@ from routes.dependencies.carts import get_or_create_cart
 from routes.dependencies.directors import get_director_or_404
 from routes.dependencies.genres import get_genre_or_404
 from routes.dependencies.movies import get_movie_id_or_404, get_movie_or_404
+from routes.dependencies.orders import get_user_order_or_404
 
 __all__ = [
     "get_actor_or_404",
@@ -11,4 +12,5 @@ __all__ = [
     "get_genre_or_404",
     "get_movie_id_or_404",
     "get_movie_or_404",
+    "get_user_order_or_404",
 ]
