@@ -101,6 +101,24 @@ FavoriteMoviesModel = Table(
 )
 
 
+CommentLikesModel = Table(
+    "comment_likes",
+    Base.metadata,
+    Column(
+        "user_id",
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
+    Column(
+        "comment_id",
+        ForeignKey("movie_comments.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
+)
+
+
 class GenreModel(Base):
     __tablename__ = "genres"
 
@@ -299,4 +317,8 @@ class MovieCommentModel(Base):
         back_populates="parent",
         cascade="all, delete-orphan",
         order_by="MovieCommentModel.created_at",
+    )
+    liked_by: Mapped[list["UserModel"]] = relationship(
+        secondary=CommentLikesModel,
+        back_populates="liked_comments",
     )

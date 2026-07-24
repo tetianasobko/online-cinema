@@ -11,6 +11,7 @@ from database.models.accounts import (
 from database.models.base import Base
 from database.models.movies import (
     CertificationModel,
+    CommentLikesModel,
     DirectorModel,
     FavoriteMoviesModel,
     GenreModel,
@@ -29,6 +30,7 @@ __all__ = [
     "ActivationTokenModel",
     "Base",
     "CertificationModel",
+    "CommentLikesModel",
     "DirectorModel",
     "FavoriteMoviesModel",
     "GenderEnum",
