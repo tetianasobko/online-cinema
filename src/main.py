@@ -12,6 +12,7 @@ from routes import (
     genres_router,
     movies_router,
     moderator_actors_router,
+    moderator_directors_router,
     moderator_genres_router,
     moderator_movies_router,
     notifications_router,
@@ -92,6 +93,12 @@ app.include_router(
     moderator_actors_router,
     prefix=f"{api_version_prefix}/admin/actors",
     tags=["moderator actor management"],
+)
+
+app.include_router(
+    moderator_directors_router,
+    prefix=f"{api_version_prefix}/admin/directors",
+    tags=["moderator director management"],
 )
 
 app.include_router(
