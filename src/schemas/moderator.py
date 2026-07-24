@@ -33,6 +33,21 @@ class ActorManagementSchema(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class DirectorCreateSchema(NamedEntitySchema):
+    pass
+
+
+class DirectorUpdateSchema(NamedEntitySchema):
+    pass
+
+
+class DirectorManagementSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
 class GenreCreateSchema(NamedEntitySchema):
     pass
 
