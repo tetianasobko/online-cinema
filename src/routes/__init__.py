@@ -4,6 +4,7 @@ from routes.comments import router as comments_router
 from routes.favorites import router as favorites_router
 from routes.genres import router as genres_router
 from routes.movies import router as movies_router
+from routes.notifications import router as notifications_router
 from routes.reactions import router as reactions_router
 from routes.ratings import router as ratings_router
 
@@ -14,6 +15,7 @@ __all__ = [
     "favorites_router",
     "genres_router",
     "movies_router",
+    "notifications_router",
     "reactions_router",
     "ratings_router",
 ]

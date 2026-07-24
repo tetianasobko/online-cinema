@@ -32,6 +32,7 @@ from schemas.movies import (
     MovieSortField,
     SortOrder,
 )
+from schemas.notifications import NotificationListSchema, NotificationSchema
 
 __all__ = [
     "ActivationResendRequestSchema",
@@ -51,6 +52,8 @@ __all__ = [
     "MovieRatingRequestSchema",
     "MovieRatingResponseSchema",
     "MovieSortField",
+    "NotificationListSchema",
+    "NotificationSchema",
     "PasswordChangeRequestSchema",
     "PasswordResetRequestSchema",
     "PasswordResetCompleteRequestSchema",
