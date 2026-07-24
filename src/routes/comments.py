@@ -1,13 +1,13 @@
 from math import ceil
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models import MovieCommentModel, MovieModel, UserModel
+from database.models import MovieCommentModel, UserModel
 from database.session import get_db
+from routes.dependencies import get_movie_id_or_404
 from schemas.movies import (
     MovieCommentCreateSchema,
     MovieCommentListSchema,
@@ -20,30 +20,17 @@ from security.authorization import get_current_user
 router = APIRouter()
 
 
-async def _get_movie_id(movie_uuid: UUID, db: AsyncSession) -> int:
-    movie_id = await db.scalar(
-        select(MovieModel.id).where(MovieModel.uuid == movie_uuid)
-    )
-    if movie_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie not found.",
-        )
-    return movie_id
-
-
 @router.get(
     "/movies/{movie_uuid}/comments",
     response_model=MovieCommentListSchema,
     status_code=status.HTTP_200_OK,
 )
 async def get_movie_comments(
-    movie_uuid: UUID,
+    movie_id: int = Depends(get_movie_id_or_404),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ) -> MovieCommentListSchema:
-    movie_id = await _get_movie_id(movie_uuid, db)
     root_conditions = (
         MovieCommentModel.movie_id == movie_id,
         MovieCommentModel.parent_id.is_(None),
@@ -79,12 +66,11 @@ async def get_movie_comments(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_movie_comment(
-    movie_uuid: UUID,
     data: MovieCommentCreateSchema,
+    movie_id: int = Depends(get_movie_id_or_404),
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MovieCommentSchema:
-    movie_id = await _get_movie_id(movie_uuid, db)
     comment = MovieCommentModel(
         text=data.text,
         user_id=user.id,

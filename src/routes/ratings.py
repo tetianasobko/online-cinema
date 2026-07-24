@@ -1,28 +1,16 @@
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import MovieModel, MovieRatingModel, UserModel
+from database.models import MovieRatingModel, UserModel
 from database.session import get_db
+from routes.dependencies import get_movie_id_or_404
 from schemas.movies import MovieRatingRequestSchema, MovieRatingResponseSchema
 from security.authorization import get_current_user
 
 
 router = APIRouter()
-
-
-async def _get_movie_id(movie_uuid: UUID, db: AsyncSession) -> int:
-    movie_id = await db.scalar(
-        select(MovieModel.id).where(MovieModel.uuid == movie_uuid)
-    )
-    if movie_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie not found.",
-        )
-    return movie_id
 
 
 async def _get_rating(
@@ -44,11 +32,10 @@ async def _get_rating(
     status_code=status.HTTP_200_OK,
 )
 async def get_movie_rating(
-    movie_uuid: UUID,
+    movie_id: int = Depends(get_movie_id_or_404),
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MovieRatingResponseSchema:
-    movie_id = await _get_movie_id(movie_uuid, db)
     rating = await _get_rating(user.id, movie_id, db)
     return MovieRatingResponseSchema(
         message="Movie rating retrieved.",
@@ -62,12 +49,11 @@ async def get_movie_rating(
     status_code=status.HTTP_200_OK,
 )
 async def set_movie_rating(
-    movie_uuid: UUID,
     data: MovieRatingRequestSchema,
+    movie_id: int = Depends(get_movie_id_or_404),
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MovieRatingResponseSchema:
-    movie_id = await _get_movie_id(movie_uuid, db)
     rating = await _get_rating(user.id, movie_id, db)
 
     if rating is None:
@@ -97,11 +83,10 @@ async def set_movie_rating(
     status_code=status.HTTP_200_OK,
 )
 async def remove_movie_rating(
-    movie_uuid: UUID,
+    movie_id: int = Depends(get_movie_id_or_404),
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MovieRatingResponseSchema:
-    movie_id = await _get_movie_id(movie_uuid, db)
     rating = await _get_rating(user.id, movie_id, db)
 
     if rating is None:
