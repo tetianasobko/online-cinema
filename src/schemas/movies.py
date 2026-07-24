@@ -133,6 +133,7 @@ class MovieCommentReplySchema(BaseModel):
     parent_id: int
     created_at: datetime
     updated_at: datetime
+    likes_count: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -144,6 +145,7 @@ class MovieCommentSchema(BaseModel):
     parent_id: int | None
     created_at: datetime
     updated_at: datetime
+    likes_count: int = 0
     replies: list[MovieCommentReplySchema] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
