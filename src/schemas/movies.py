@@ -1,9 +1,10 @@
 from decimal import Decimal
+from datetime import datetime
 from enum import Enum
 from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from database.models import MovieReactionEnum
 
@@ -111,3 +112,46 @@ class MovieRatingRequestSchema(BaseModel):
 class MovieRatingResponseSchema(BaseModel):
     message: str
     rating: int | None
+
+
+class MovieCommentCreateSchema(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("Comment text cannot be empty.")
+        return text
+
+
+class MovieCommentReplySchema(BaseModel):
+    id: int
+    text: str
+    user_id: int
+    parent_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class MovieCommentSchema(BaseModel):
+    id: int
+    text: str
+    user_id: int
+    parent_id: int | None
+    created_at: datetime
+    updated_at: datetime
+    replies: list[MovieCommentReplySchema] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
+
+
+class MovieCommentListSchema(BaseModel):
+    comments: list[MovieCommentSchema]
+    page: int
+    per_page: int
+    total_pages: int
+    total_items: int
