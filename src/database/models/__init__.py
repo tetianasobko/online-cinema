@@ -28,6 +28,11 @@ from database.models.movies import (
     NotificationTypeEnum,
     StarModel,
 )
+from database.models.orders import (
+    OrderItemModel,
+    OrderModel,
+    OrderStatusEnum,
+)
 
 __all__ = [
     "ActivationTokenModel",
@@ -50,6 +55,9 @@ __all__ = [
     "MovieStarsModel",
     "NotificationModel",
     "NotificationTypeEnum",
+    "OrderItemModel",
+    "OrderModel",
+    "OrderStatusEnum",
     "PasswordResetTokenModel",
     "RefreshTokenModel",
     "StarModel",
