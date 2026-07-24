@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     DECIMAL,
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Index,
     String,
     Table,
     Text,
@@ -27,6 +29,11 @@ from database.models.base import Base
 class MovieReactionEnum(str, enum.Enum):
     LIKE = "like"
     DISLIKE = "dislike"
+
+
+class NotificationTypeEnum(str, enum.Enum):
+    COMMENT_REPLY = "comment_reply"
+    COMMENT_LIKE = "comment_like"
 
 
 MovieGenresModel = Table(
@@ -321,4 +328,56 @@ class MovieCommentModel(Base):
     liked_by: Mapped[list["UserModel"]] = relationship(
         secondary=CommentLikesModel,
         back_populates="liked_comments",
+    )
+    notifications: Mapped[list["NotificationModel"]] = relationship(
+        back_populates="comment",
+        cascade="all, delete-orphan",
+    )
+
+
+class NotificationModel(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        Index(
+            "ix_notifications_recipient_created_at",
+            "recipient_id",
+            "created_at",
+        ),
+        Index(
+            "ix_notifications_recipient_is_read",
+            "recipient_id",
+            "is_read",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    type: Mapped[NotificationTypeEnum] = mapped_column(
+        Enum(NotificationTypeEnum), nullable=False
+    )
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    recipient_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    actor_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    comment_id: Mapped[int] = mapped_column(
+        ForeignKey("movie_comments.id", ondelete="CASCADE"), nullable=False
+    )
+
+    recipient: Mapped["UserModel"] = relationship(
+        foreign_keys=[recipient_id],
+        back_populates="received_notifications",
+    )
+    actor: Mapped["UserModel"] = relationship(
+        foreign_keys=[actor_id],
+        back_populates="triggered_notifications",
+    )
+    comment: Mapped["MovieCommentModel"] = relationship(
+        back_populates="notifications"
     )

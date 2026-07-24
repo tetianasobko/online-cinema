@@ -100,6 +100,15 @@ class UserModel(Base):
         secondary="comment_likes",
         back_populates="liked_by",
     )
+    received_notifications: Mapped[list["NotificationModel"]] = relationship(
+        foreign_keys="NotificationModel.recipient_id",
+        back_populates="recipient",
+        cascade="all, delete-orphan",
+    )
+    triggered_notifications: Mapped[list["NotificationModel"]] = relationship(
+        foreign_keys="NotificationModel.actor_id",
+        back_populates="actor",
+    )
 
     def __repr__(self) -> str:
         return (

@@ -23,6 +23,8 @@ from database.models.movies import (
     MovieReactionModel,
     MovieRatingModel,
     MovieStarsModel,
+    NotificationModel,
+    NotificationTypeEnum,
     StarModel,
 )
 
@@ -43,6 +45,8 @@ __all__ = [
     "MovieReactionModel",
     "MovieRatingModel",
     "MovieStarsModel",
+    "NotificationModel",
+    "NotificationTypeEnum",
     "PasswordResetTokenModel",
     "RefreshTokenModel",
     "StarModel",
