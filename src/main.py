@@ -6,6 +6,7 @@ from database.populate import seed_user_groups
 from database.session import AsyncSQLiteSessionLocal
 from routes import (
     accounts_router,
+    admin_carts_router,
     carts_router,
     comment_likes_router,
     comments_router,
@@ -35,6 +36,12 @@ app = FastAPI(
 )
 
 api_version_prefix = "/api/v1"
+
+app.include_router(
+    admin_carts_router,
+    prefix=f"{api_version_prefix}/admin",
+    tags=["admin cart inspection"],
+)
 
 app.include_router(
     carts_router,

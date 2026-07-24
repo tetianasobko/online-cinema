@@ -1,4 +1,5 @@
 from routes.accounts import router as accounts_router
+from routes.admin_carts import router as admin_carts_router
 from routes.carts import router as carts_router
 from routes.comment_likes import router as comment_likes_router
 from routes.comments import router as comments_router
@@ -15,6 +16,7 @@ from routes.ratings import router as ratings_router
 
 __all__ = [
     "accounts_router",
+    "admin_carts_router",
     "carts_router",
     "comment_likes_router",
     "comments_router",
