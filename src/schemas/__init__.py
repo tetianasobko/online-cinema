@@ -34,6 +34,9 @@ from schemas.movies import (
 )
 from schemas.notifications import NotificationListSchema, NotificationSchema
 from schemas.moderator import (
+    ActorCreateSchema,
+    ActorManagementSchema,
+    ActorUpdateSchema,
     GenreCreateSchema,
     GenreManagementSchema,
     GenreUpdateSchema,
@@ -43,6 +46,9 @@ from schemas.moderator import (
 )
 
 __all__ = [
+    "ActorCreateSchema",
+    "ActorManagementSchema",
+    "ActorUpdateSchema",
     "ActivationResendRequestSchema",
     "MessageResponseSchema",
     "MovieCommentCreateSchema",
