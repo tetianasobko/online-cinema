@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Annotated
 from uuid import UUID
 
@@ -15,10 +14,10 @@ from database.models import (
 )
 from database.queries import get_movie_page
 from database.session import get_db
+from routes.helpers import build_movie_list_response
 from schemas.movies import (
     MovieCatalogQuerySchema,
     MovieDetailSchema,
-    MovieListItemSchema,
     MovieListResponseSchema,
 )
 
@@ -36,19 +35,7 @@ async def get_movies(
     db: AsyncSession = Depends(get_db),
 ) -> MovieListResponseSchema:
     movies, total_items = await get_movie_page(db, params)
-    movie_items = [
-        MovieListItemSchema.model_validate(movie) for movie in movies
-    ]
-
-    return MovieListResponseSchema(
-        movies=movie_items,
-        page=params.page,
-        per_page=params.per_page,
-        total_pages=(
-            ceil(total_items / params.per_page) if total_items else 0
-        ),
-        total_items=total_items,
-    )
+    return build_movie_list_response(movies, total_items, params)
 
 
 @router.get(

@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -9,10 +8,10 @@ from database.models import FavoriteMoviesModel, MovieModel, UserModel
 from database.queries import get_movie_page
 from database.session import get_db
 from routes.dependencies import get_movie_id_or_404
+from routes.helpers import build_movie_list_response
 from schemas.accounts import MessageResponseSchema
 from schemas.movies import (
     MovieCatalogQuerySchema,
-    MovieListItemSchema,
     MovieListResponseSchema,
 )
 from security.authorization import get_current_user
@@ -105,16 +104,4 @@ async def get_favorites(
         params,
         additional_conditions=(favorite_condition,),
     )
-    movie_items = [
-        MovieListItemSchema.model_validate(movie) for movie in movies
-    ]
-
-    return MovieListResponseSchema(
-        movies=movie_items,
-        page=params.page,
-        per_page=params.per_page,
-        total_pages=(
-            ceil(total_items / params.per_page) if total_items else 0
-        ),
-        total_items=total_items,
-    )
+    return build_movie_list_response(movies, total_items, params)
