@@ -5,7 +5,7 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import FavoriteMoviesModel, MovieModel, UserModel
-from database.queries import get_movie_page
+from database.queries import favorite_exists, get_movie_page
 from database.session import get_db
 from routes.dependencies import get_movie_id_or_404
 from routes.helpers import build_movie_list_response
@@ -30,13 +30,7 @@ async def add_favorite(
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponseSchema:
-    favorite_exists = await db.scalar(
-        select(FavoriteMoviesModel.c.movie_id).where(
-            FavoriteMoviesModel.c.user_id == user.id,
-            FavoriteMoviesModel.c.movie_id == movie_id,
-        )
-    )
-    if favorite_exists is not None:
+    if await favorite_exists(db, user.id, movie_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Movie is already in favorites.",
@@ -62,13 +56,7 @@ async def remove_favorite(
     user: UserModel = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponseSchema:
-    favorite_exists = await db.scalar(
-        select(FavoriteMoviesModel.c.movie_id).where(
-            FavoriteMoviesModel.c.user_id == user.id,
-            FavoriteMoviesModel.c.movie_id == movie_id,
-        )
-    )
-    if favorite_exists is None:
+    if not await favorite_exists(db, user.id, movie_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie is not in favorites.",
