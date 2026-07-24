@@ -2,19 +2,24 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import (
+    CartItemModel,
     CertificationModel,
     DirectorModel,
     GenreModel,
     MovieModel,
+    OrderItemModel,
+    OrderModel,
+    OrderStatusEnum,
     StarModel,
 )
 from database.session import get_db
 from routes.dependencies import get_movie_or_404
+from schemas.accounts import MessageResponseSchema
 from schemas.moderator import (
     MovieCreateSchema,
     MovieManagementSchema,
@@ -161,3 +166,61 @@ async def update_movie(
             detail="A movie with the same name, year, and time already exists.",
         ) from error
     return MovieManagementSchema.model_validate(movie)
+
+
+@router.delete(
+    "/{movie_uuid}",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def delete_movie(
+    movie_uuid: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    movie = await get_movie_or_404(movie_uuid, db)
+
+    purchase_exists = await db.scalar(
+        select(OrderItemModel.id)
+        .join(OrderModel)
+        .where(
+            OrderItemModel.movie_id == movie.id,
+            OrderModel.status == OrderStatusEnum.PAID,
+        )
+        .limit(1)
+    )
+    if purchase_exists is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This movie cannot be deleted because it has been purchased."
+            ),
+        )
+
+    affected_carts = await db.scalar(
+        select(func.count(func.distinct(CartItemModel.cart_id))).where(
+            CartItemModel.movie_id == movie.id
+        )
+    ) or 0
+    if affected_carts:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This movie cannot be deleted because it is currently in "
+                f"{affected_carts} user cart(s)."
+            ),
+        )
+
+    await db.delete(movie)
+    try:
+        await db.commit()
+    except IntegrityError as error:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This movie cannot be deleted because it is referenced "
+                "by existing records."
+            ),
+        ) from error
+
+    return MessageResponseSchema(message="Movie deleted successfully.")
