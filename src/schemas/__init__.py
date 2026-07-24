@@ -14,7 +14,12 @@ from schemas.accounts import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
 )
-from schemas.carts import CartItemSchema, CartMovieSchema, CartSchema
+from schemas.carts import (
+    AdminCartSchema,
+    CartItemSchema,
+    CartMovieSchema,
+    CartSchema,
+)
 from schemas.movies import (
     MovieCommentCreateSchema,
     MovieCommentListSchema,
@@ -54,6 +59,7 @@ __all__ = [
     "ActorManagementSchema",
     "ActorUpdateSchema",
     "ActivationResendRequestSchema",
+    "AdminCartSchema",
     "CartItemSchema",
     "CartMovieSchema",
     "CartSchema",

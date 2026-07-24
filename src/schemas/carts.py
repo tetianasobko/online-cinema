@@ -32,3 +32,12 @@ class CartSchema(BaseModel):
     total_price: Decimal
 
     model_config = {"from_attributes": True}
+
+
+class AdminCartSchema(BaseModel):
+    user_id: int
+    user_email: str
+    cart_id: int | None
+    items: list[CartItemSchema]
+    total_items: int
+    total_price: Decimal
