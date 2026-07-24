@@ -128,6 +128,16 @@ async def create_order(
     excluded_cart_item_ids = []
     for cart_item in cart.items:
         movie = cart_item.movie
+        if movie is None:
+            excluded_cart_item_ids.append(cart_item.id)
+            excluded_movies.append(
+                ExcludedMovieSchema(
+                    uuid=None,
+                    name=f"Deleted movie (ID: {cart_item.movie_id})",
+                    reason="Movie no longer exists.",
+                )
+            )
+            continue
         if movie.price is None:
             reason = "Movie is not available for purchase."
         elif movie.id in purchased_movie_ids:
