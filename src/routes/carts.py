@@ -1,4 +1,3 @@
-from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,8 +19,9 @@ from routes.dependencies import (
     get_movie_or_404,
     get_or_create_cart,
 )
+from routes.helpers import build_cart_items_and_total
 from schemas.accounts import MessageResponseSchema
-from schemas.carts import CartItemSchema, CartSchema
+from schemas.carts import CartSchema
 
 
 router = APIRouter()
@@ -138,18 +138,7 @@ async def clear_cart(
 async def get_cart(
     cart: CartModel = Depends(get_or_create_cart),
 ) -> CartSchema:
-    items = [
-        CartItemSchema.model_validate(item)
-        for item in cart.items
-    ]
-    total_price = sum(
-        (
-            item.movie.price
-            for item in cart.items
-            if item.movie.price is not None
-        ),
-        start=Decimal("0.00"),
-    )
+    items, total_price = build_cart_items_and_total(cart)
     return CartSchema(
         id=cart.id,
         items=items,
