@@ -15,7 +15,8 @@ from database.models import (
     UserModel,
 )
 from database.session import get_db
-from routes.dependencies import get_or_create_cart
+from routes.dependencies import get_or_create_cart, get_user_order_or_404
+from schemas.accounts import MessageResponseSchema
 from schemas.orders import (
     ExcludedMovieSchema,
     OrderCreateResponseSchema,
@@ -54,6 +55,31 @@ async def get_orders(
     return OrderListSchema(
         orders=[OrderSchema.model_validate(order) for order in orders]
     )
+
+
+@router.post(
+    "/{order_id}/cancel",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def cancel_order(
+    order: OrderModel = Depends(get_user_order_or_404),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    if order.status == OrderStatusEnum.PAID:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Paid orders cannot be canceled directly. "
+                "Submit a refund request."
+            ),
+        )
+    if order.status == OrderStatusEnum.CANCELED:
+        return MessageResponseSchema(message="Order is already canceled.")
+
+    order.status = OrderStatusEnum.CANCELED
+    await db.commit()
+    return MessageResponseSchema(message="Order canceled successfully.")
 
 
 @router.post(
