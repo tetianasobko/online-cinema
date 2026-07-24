@@ -41,6 +41,7 @@ class PaymentModel(Base):
             length=50,
         ),
         default=PaymentStatusEnum.SUCCESSFUL,
+        server_default=PaymentStatusEnum.SUCCESSFUL.value,
         nullable=False,
     )
     amount: Mapped[Decimal] = mapped_column(
