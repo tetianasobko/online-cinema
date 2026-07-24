@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,15 @@ from schemas.movies import (
     MovieSortField,
     SortOrder,
 )
+
+
+async def get_movie_id_by_uuid(
+    db: AsyncSession,
+    movie_uuid: UUID,
+) -> int | None:
+    return await db.scalar(
+        select(MovieModel.id).where(MovieModel.uuid == movie_uuid)
+    )
 
 
 def _build_conditions(
