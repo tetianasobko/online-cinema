@@ -80,6 +80,35 @@ class UserModel(Base):
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    favorite_movies: Mapped[list["MovieModel"]] = relationship(
+        secondary="favorite_movies",
+        back_populates="favorited_by",
+    )
+    movie_reactions: Mapped[list["MovieReactionModel"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_ratings: Mapped[list["MovieRatingModel"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_comments: Mapped[list["MovieCommentModel"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    liked_comments: Mapped[list["MovieCommentModel"]] = relationship(
+        secondary="comment_likes",
+        back_populates="liked_by",
+    )
+    received_notifications: Mapped[list["NotificationModel"]] = relationship(
+        foreign_keys="NotificationModel.recipient_id",
+        back_populates="recipient",
+        cascade="all, delete-orphan",
+    )
+    triggered_notifications: Mapped[list["NotificationModel"]] = relationship(
+        foreign_keys="NotificationModel.actor_id",
+        back_populates="actor",
+    )
 
     def __repr__(self) -> str:
         return (
