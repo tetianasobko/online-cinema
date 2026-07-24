@@ -2,7 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -112,6 +112,22 @@ async def remove_movie_from_cart(
     await db.delete(cart_item)
     await db.commit()
     return MessageResponseSchema(message="Movie removed from the cart.")
+
+
+@router.delete(
+    "/",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def clear_cart(
+    cart: CartModel = Depends(get_or_create_cart),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    await db.execute(
+        delete(CartItemModel).where(CartItemModel.cart_id == cart.id)
+    )
+    await db.commit()
+    return MessageResponseSchema(message="Cart cleared successfully.")
 
 
 @router.get(
