@@ -35,5 +35,5 @@ class PaymentListSchema(BaseModel):
 
 
 class PaymentCheckoutResponseSchema(BaseModel):
-    payment_id: int
+    checkout_session_id: str
     checkout_url: str
