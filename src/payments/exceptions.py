@@ -12,3 +12,19 @@ class InvalidWebhookPayloadError(StripeGatewayError):
 
 class InvalidWebhookSignatureError(StripeGatewayError):
     """Raised when a Stripe webhook signature cannot be verified."""
+
+
+class PaymentServiceError(Exception):
+    """Base exception for payment workflow failures."""
+
+
+class PaymentOrderNotFoundError(PaymentServiceError):
+    """Raised when the user does not own the requested order."""
+
+
+class OrderNotPayableError(PaymentServiceError):
+    """Raised when an order cannot enter the payment flow."""
+
+
+class OrderItemUnavailableError(PaymentServiceError):
+    """Raised when an order item cannot be purchased."""
