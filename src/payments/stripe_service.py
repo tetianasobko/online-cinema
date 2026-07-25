@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from database.models import (
+    MovieModel,
     OrderItemModel,
     OrderModel,
     OrderStatusEnum,
@@ -19,7 +20,6 @@ from payments.interfaces import (
     StripeCheckoutSession,
     StripeGatewayInterface,
 )
-from routes.helpers import revalidate_order_total
 
 
 class StripePaymentService:
@@ -64,20 +64,12 @@ class StripePaymentService:
         if not order.items:
             raise OrderNotPayableError("The order has no items.")
 
-        try:
-            await revalidate_order_total(db, order)
-        except ValueError as error:
-            raise OrderItemUnavailableError(str(error)) from error
+        await self._revalidate_order_total(db, order)
 
         line_items = []
         for item in order.items:
             movie = item.movie
             price = item.price_at_order
-            if movie is None:
-                raise OrderItemUnavailableError(
-                    f"Movie with ID {item.movie_id} no longer exists."
-                )
-
             unit_amount = self._to_minor_units(price)
             line_items.append(
                 {
@@ -100,6 +92,41 @@ class StripePaymentService:
                 "user_id": str(user.id),
             },
         )
+
+    @staticmethod
+    async def _revalidate_order_total(
+        db: AsyncSession,
+        order: OrderModel,
+    ) -> None:
+        movie_ids = [item.movie_id for item in order.items]
+        price_rows = await db.execute(
+            select(MovieModel.id, MovieModel.price).where(
+                MovieModel.id.in_(movie_ids)
+            )
+        )
+        current_prices: dict[int, Decimal | None] = {
+            movie_id: price
+            for movie_id, price in price_rows.tuples()
+        }
+
+        total_amount = Decimal("0.00")
+        for item in order.items:
+            if item.movie_id not in current_prices:
+                raise OrderItemUnavailableError(
+                    f"Movie with ID {item.movie_id} no longer exists."
+                )
+
+            current_price = current_prices[item.movie_id]
+            if current_price is None:
+                raise OrderItemUnavailableError(
+                    f"Movie with ID {item.movie_id} is unavailable for "
+                    "purchase."
+                )
+
+            item.price_at_order = current_price
+            total_amount += current_price
+
+        order.total_amount = total_amount
 
     @staticmethod
     def _to_minor_units(amount: Decimal) -> int:
