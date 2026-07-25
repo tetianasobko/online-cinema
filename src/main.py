@@ -19,6 +19,7 @@ from routes import (
     moderator_movies_router,
     notifications_router,
     orders_router,
+    payments_router,
     ratings_router,
     reactions_router,
 )
@@ -102,6 +103,12 @@ app.include_router(
     orders_router,
     prefix=f"{api_version_prefix}/orders",
     tags=["orders"],
+)
+
+app.include_router(
+    payments_router,
+    prefix=f"{api_version_prefix}/payments",
+    tags=["payments"],
 )
 
 app.include_router(
