@@ -1,8 +1,10 @@
 from payments.exceptions import (
+    InvalidWebhookEventError,
     InvalidWebhookPayloadError,
     InvalidWebhookSignatureError,
     OrderItemUnavailableError,
     OrderNotPayableError,
+    PaymentAmountMismatchError,
     PaymentOrderNotFoundError,
     PaymentServiceError,
     StripeCheckoutError,
@@ -16,10 +18,12 @@ from payments.stripe_gateway import StripeGateway
 from payments.stripe_service import StripePaymentService
 
 __all__ = [
+    "InvalidWebhookEventError",
     "InvalidWebhookPayloadError",
     "InvalidWebhookSignatureError",
     "OrderItemUnavailableError",
     "OrderNotPayableError",
+    "PaymentAmountMismatchError",
     "PaymentOrderNotFoundError",
     "PaymentServiceError",
     "StripeCheckoutError",

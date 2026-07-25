@@ -1,6 +1,9 @@
+from collections.abc import Mapping
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -9,11 +12,16 @@ from database.models import (
     OrderItemModel,
     OrderModel,
     OrderStatusEnum,
+    PaymentItemModel,
+    PaymentModel,
+    PaymentStatusEnum,
     UserModel,
 )
 from payments.exceptions import (
+    InvalidWebhookEventError,
     OrderItemUnavailableError,
     OrderNotPayableError,
+    PaymentAmountMismatchError,
     PaymentOrderNotFoundError,
 )
 from payments.interfaces import (
@@ -23,6 +31,12 @@ from payments.interfaces import (
 
 
 class StripePaymentService:
+    _SUCCESSFUL_EVENTS = {
+        "checkout.session.completed",
+        "checkout.session.async_payment_succeeded",
+    }
+    _FAILED_EVENTS = {"checkout.session.async_payment_failed"}
+
     def __init__(
         self,
         gateway: StripeGatewayInterface,
@@ -92,6 +106,146 @@ class StripePaymentService:
                 "user_id": str(user.id),
             },
         )
+
+    async def process_webhook_event(
+        self,
+        *,
+        db: AsyncSession,
+        event: Mapping[str, Any],
+    ) -> PaymentModel | None:
+        event_type = event.get("type")
+        if (
+            event_type not in self._SUCCESSFUL_EVENTS
+            and event_type not in self._FAILED_EVENTS
+        ):
+            return None
+
+        session = self._get_webhook_session(event)
+        if (
+            event_type == "checkout.session.completed"
+            and session.get("payment_status") != "paid"
+        ):
+            return None
+
+        session_id = session.get("id")
+        if not isinstance(session_id, str) or not session_id:
+            raise InvalidWebhookEventError(
+                "Stripe Checkout Session ID is missing."
+            )
+
+        existing_payment = await db.scalar(
+            select(PaymentModel)
+            .options(selectinload(PaymentModel.items))
+            .where(PaymentModel.external_payment_id == session_id)
+        )
+        if existing_payment is not None:
+            return existing_payment
+
+        order_id, user_id = self._get_webhook_metadata(session)
+        order = await db.scalar(
+            select(OrderModel)
+            .options(selectinload(OrderModel.items))
+            .where(
+                OrderModel.id == order_id,
+                OrderModel.user_id == user_id,
+            )
+        )
+        if order is None:
+            raise PaymentOrderNotFoundError("Order not found.")
+        if order.status == OrderStatusEnum.CANCELED:
+            raise OrderNotPayableError("Canceled orders cannot be paid.")
+        if not order.items or order.total_amount is None:
+            raise OrderNotPayableError(
+                "The order has no payable items."
+            )
+
+        stripe_amount = self._get_webhook_amount(session)
+        if stripe_amount != order.total_amount:
+            raise PaymentAmountMismatchError(
+                "Stripe payment amount does not match the order total."
+            )
+
+        payment_status = (
+            PaymentStatusEnum.SUCCESSFUL
+            if event_type in self._SUCCESSFUL_EVENTS
+            else PaymentStatusEnum.CANCELED
+        )
+        payment = PaymentModel(
+            user_id=user_id,
+            order_id=order.id,
+            status=payment_status,
+            amount=stripe_amount,
+            external_payment_id=session_id,
+            items=[
+                PaymentItemModel(
+                    order_item=item,
+                    price_at_payment=item.price_at_order,
+                )
+                for item in order.items
+            ],
+        )
+        if payment_status == PaymentStatusEnum.SUCCESSFUL:
+            order.status = OrderStatusEnum.PAID
+
+        db.add(payment)
+        try:
+            await db.commit()
+        except IntegrityError as error:
+            await db.rollback()
+            raise InvalidWebhookEventError(
+                "The Stripe payment could not be saved."
+            ) from error
+
+        return payment
+
+    @staticmethod
+    def _get_webhook_session(
+        event: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        data = event.get("data")
+        if not isinstance(data, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe webhook data is missing."
+            )
+        session = data.get("object")
+        if not isinstance(session, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe Checkout Session is missing."
+            )
+        return session
+
+    @staticmethod
+    def _get_webhook_metadata(
+        session: Mapping[str, Any],
+    ) -> tuple[int, int]:
+        metadata = session.get("metadata")
+        if not isinstance(metadata, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe Checkout metadata is missing."
+            )
+        try:
+            order_id = int(metadata["order_id"])
+            user_id = int(metadata["user_id"])
+        except (KeyError, TypeError, ValueError) as error:
+            raise InvalidWebhookEventError(
+                "Stripe Checkout metadata is invalid."
+            ) from error
+        if order_id <= 0 or user_id <= 0:
+            raise InvalidWebhookEventError(
+                "Stripe Checkout metadata is invalid."
+            )
+        return order_id, user_id
+
+    @staticmethod
+    def _get_webhook_amount(
+        session: Mapping[str, Any],
+    ) -> Decimal:
+        amount_total = session.get("amount_total")
+        if not isinstance(amount_total, int) or amount_total < 0:
+            raise InvalidWebhookEventError(
+                "Stripe payment amount is invalid."
+            )
+        return Decimal(amount_total) / 100
 
     @staticmethod
     async def _revalidate_order_total(
