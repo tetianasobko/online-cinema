@@ -44,6 +44,7 @@ class BaseAppSettings(BaseSettings):
         "STRIPE_CANCEL_URL",
         "http://localhost:8000/api/v1/payments/cancel",
     )
+    STRIPE_CURRENCY: str = os.getenv("STRIPE_CURRENCY", "usd")
 
 
 class Settings(BaseAppSettings):
