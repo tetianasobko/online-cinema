@@ -12,6 +12,7 @@ from routes.moderator_genres import router as moderator_genres_router
 from routes.moderator_movies import router as moderator_movies_router
 from routes.notifications import router as notifications_router
 from routes.orders import router as orders_router
+from routes.payments import router as payments_router
 from routes.reactions import router as reactions_router
 from routes.ratings import router as ratings_router
 
@@ -30,6 +31,7 @@ __all__ = [
     "moderator_movies_router",
     "notifications_router",
     "orders_router",
+    "payments_router",
     "reactions_router",
     "ratings_router",
 ]
