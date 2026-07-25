@@ -37,3 +37,9 @@ class PaymentListSchema(BaseModel):
 class PaymentCheckoutResponseSchema(BaseModel):
     checkout_session_id: str
     checkout_url: str
+
+
+class PaymentWebhookResponseSchema(BaseModel):
+    status: str
+    processed: bool
+    payment_id: int | None

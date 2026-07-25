@@ -53,6 +53,7 @@ from schemas.payments import (
     PaymentItemSchema,
     PaymentListSchema,
     PaymentSchema,
+    PaymentWebhookResponseSchema,
 )
 from schemas.moderator import (
     ActorCreateSchema,
@@ -119,6 +120,7 @@ __all__ = [
     "PaymentItemSchema",
     "PaymentListSchema",
     "PaymentSchema",
+    "PaymentWebhookResponseSchema",
     "TokenRefreshRequestSchema",
     "TokenRefreshResponseSchema",
     "SortOrder",
