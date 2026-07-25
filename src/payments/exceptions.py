@@ -28,3 +28,11 @@ class OrderNotPayableError(PaymentServiceError):
 
 class OrderItemUnavailableError(PaymentServiceError):
     """Raised when an order item cannot be purchased."""
+
+
+class InvalidWebhookEventError(PaymentServiceError):
+    """Raised when a Stripe event lacks valid payment information."""
+
+
+class PaymentAmountMismatchError(PaymentServiceError):
+    """Raised when Stripe's amount differs from the order total."""
