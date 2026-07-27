@@ -2,12 +2,14 @@ from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from database.models import (
+    CartItemModel,
+    CartModel,
     MovieModel,
     OrderItemModel,
     OrderModel,
@@ -184,10 +186,21 @@ class StripePaymentService:
                 for item in order.items
             ],
         )
+        db.add(payment)
         if payment_status == PaymentStatusEnum.SUCCESSFUL:
             order.status = OrderStatusEnum.PAID
+            purchased_movie_ids = [item.movie_id for item in order.items]
+            await db.execute(
+                delete(CartItemModel).where(
+                    CartItemModel.cart_id.in_(
+                        select(CartModel.id).where(
+                            CartModel.user_id == user_id
+                        )
+                    ),
+                    CartItemModel.movie_id.in_(purchased_movie_ids),
+                )
+            )
 
-        db.add(payment)
         try:
             await db.commit()
         except IntegrityError as error:
