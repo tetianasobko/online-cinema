@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from config import get_stripe_gateway, get_stripe_payment_service
-from database.models import PaymentModel, UserModel
+from database.models import PaymentModel, PaymentStatusEnum, UserModel
 from database.session import get_db
 from payments import (
     InvalidWebhookEventError,
@@ -22,6 +22,7 @@ from schemas.payments import (
     PaymentCheckoutResponseSchema,
     PaymentCreateSchema,
     PaymentListSchema,
+    PaymentResultResponseSchema,
     PaymentSchema,
     PaymentWebhookResponseSchema,
 )
@@ -29,6 +30,42 @@ from security.authorization import get_current_user
 
 
 router = APIRouter()
+
+
+@router.get(
+    "/success",
+    response_model=PaymentResultResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def get_payment_result(
+    session_id: str = Query(min_length=1, max_length=255),
+    db: AsyncSession = Depends(get_db),
+) -> PaymentResultResponseSchema:
+    payment_status = await db.scalar(
+        select(PaymentModel.status).where(
+            PaymentModel.external_payment_id == session_id
+        )
+    )
+    if payment_status is None:
+        return PaymentResultResponseSchema(
+            status="processing",
+            message=(
+                "Your payment is still being processed. "
+                "Please check your payment history shortly."
+            ),
+        )
+
+    messages = {
+        PaymentStatusEnum.SUCCESSFUL: "Payment completed successfully.",
+        PaymentStatusEnum.CANCELED: (
+            "Payment was not completed. Try a different payment method."
+        ),
+        PaymentStatusEnum.REFUNDED: "Payment has been refunded.",
+    }
+    return PaymentResultResponseSchema(
+        status=payment_status.value,
+        message=messages[payment_status],
+    )
 
 
 @router.get(
