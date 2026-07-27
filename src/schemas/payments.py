@@ -43,3 +43,8 @@ class PaymentWebhookResponseSchema(BaseModel):
     status: str
     processed: bool
     payment_id: int | None
+
+
+class PaymentResultResponseSchema(BaseModel):
+    status: str
+    message: str

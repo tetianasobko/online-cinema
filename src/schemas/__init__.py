@@ -52,6 +52,7 @@ from schemas.payments import (
     PaymentCreateSchema,
     PaymentItemSchema,
     PaymentListSchema,
+    PaymentResultResponseSchema,
     PaymentSchema,
     PaymentWebhookResponseSchema,
 )
@@ -119,6 +120,7 @@ __all__ = [
     "PaymentCreateSchema",
     "PaymentItemSchema",
     "PaymentListSchema",
+    "PaymentResultResponseSchema",
     "PaymentSchema",
     "PaymentWebhookResponseSchema",
     "TokenRefreshRequestSchema",
