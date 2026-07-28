@@ -250,6 +250,17 @@ class StripePaymentService:
             await db.commit()
         except IntegrityError as error:
             await db.rollback()
+            existing_payment = await db.scalar(
+                select(PaymentModel).where(
+                    PaymentModel.external_payment_id == session_id
+                )
+            )
+            if existing_payment is not None:
+                return WebhookProcessingResult(
+                    payment_id=existing_payment.id,
+                    processed=True,
+                    created=False,
+                )
             raise InvalidWebhookEventError(
                 "The Stripe payment could not be saved."
             ) from error
