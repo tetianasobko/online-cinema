@@ -48,7 +48,10 @@ class PaymentModel(Base):
         DECIMAL(10, 2),
         nullable=False,
     )
-    external_payment_id: Mapped[str | None] = mapped_column(String(255))
+    external_payment_id: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+    )
 
     user: Mapped["UserModel"] = relationship(back_populates="payments")
     order: Mapped["OrderModel"] = relationship(back_populates="payments")
