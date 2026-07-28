@@ -43,10 +43,24 @@ class StripeGatewayInterface(ABC):
         ...
 
     @abstractmethod
+    async def retrieve_checkout_session(
+        self,
+        session_id: str,
+    ) -> Mapping[str, Any]:
+        ...
+
+    @abstractmethod
+    async def expire_checkout_session(
+        self,
+        session_id: str,
+    ) -> Mapping[str, Any]:
+        ...
+
+    @abstractmethod
     def construct_webhook_event(
         self,
         *,
         payload: bytes,
         signature: str,
     ) -> Mapping[str, Any]:
-       ...
+        ...
