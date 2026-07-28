@@ -1,4 +1,7 @@
+from datetime import datetime
+from decimal import Decimal
 from email.message import EmailMessage
+from pathlib import Path
 
 import aiosmtplib
 from fastapi import Depends
@@ -8,6 +11,12 @@ from notifications.interfaces import EmailSenderInterface
 
 
 class SMTPEmailSender:
+    _PAYMENT_CONFIRMATION_TEMPLATE = (
+        Path(__file__).parent
+        / "templates"
+        / "payment_confirmation.txt"
+    )
+
     def __init__(self, settings: Settings):
         self.settings = settings
 
@@ -44,6 +53,41 @@ class SMTPEmailSender:
             "Reset your password within 24 hours using this link:\n"
             f"{reset_link}"
         )
+
+        await aiosmtplib.send(
+            message,
+            hostname=self.settings.EMAIL_HOST,
+            port=self.settings.EMAIL_PORT,
+        )
+
+    async def send_payment_confirmation_email(
+        self,
+        recipient: str,
+        order_id: int,
+        movie_names: list[str],
+        total_amount: Decimal,
+        currency: str,
+        payment_date: datetime,
+    ) -> None:
+        movie_list = "\n".join(
+            f"- {movie_name}" for movie_name in movie_names
+        )
+        template = self._PAYMENT_CONFIRMATION_TEMPLATE.read_text(
+            encoding="utf-8"
+        )
+        content = template.format(
+            order_id=order_id,
+            payment_date=payment_date.isoformat(),
+            movie_list=movie_list,
+            total_amount=f"{total_amount:.2f}",
+            currency=currency.upper(),
+        )
+
+        message = EmailMessage()
+        message["From"] = self.settings.EMAIL_FROM
+        message["To"] = recipient
+        message["Subject"] = "Your Online Cinema payment is confirmed"
+        message.set_content(content)
 
         await aiosmtplib.send(
             message,
