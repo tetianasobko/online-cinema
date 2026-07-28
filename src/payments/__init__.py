@@ -9,11 +9,13 @@ from payments.exceptions import (
     PaymentServiceError,
     StripeCheckoutError,
     StripeGatewayError,
+    StripeRefundError,
 )
 from payments.interfaces import (
     PaymentEmailConfirmation,
     StripeCheckoutSession,
     StripeGatewayInterface,
+    StripeRefund,
     WebhookProcessingResult,
 )
 from payments.stripe_gateway import StripeGateway
@@ -35,5 +37,7 @@ __all__ = [
     "StripeGatewayError",
     "StripeGatewayInterface",
     "StripePaymentService",
+    "StripeRefund",
+    "StripeRefundError",
     "WebhookProcessingResult",
 ]

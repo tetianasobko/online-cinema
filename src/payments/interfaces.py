@@ -13,6 +13,12 @@ class StripeCheckoutSession:
 
 
 @dataclass(frozen=True)
+class StripeRefund:
+    id: str
+    status: str | None
+
+
+@dataclass(frozen=True)
 class PaymentEmailConfirmation:
     recipient: str
     order_id: int
@@ -54,6 +60,13 @@ class StripeGatewayInterface(ABC):
         self,
         session_id: str,
     ) -> Mapping[str, Any]:
+        ...
+
+    @abstractmethod
+    async def create_refund(
+        self,
+        checkout_session_id: str,
+    ) -> StripeRefund:
         ...
 
     @abstractmethod
