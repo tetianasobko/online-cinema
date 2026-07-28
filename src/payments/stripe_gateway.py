@@ -7,10 +7,12 @@ from payments.exceptions import (
     InvalidWebhookPayloadError,
     InvalidWebhookSignatureError,
     StripeCheckoutError,
+    StripeRefundError,
 )
 from payments.interfaces import (
     StripeCheckoutSession,
     StripeGatewayInterface,
+    StripeRefund,
 )
 
 
@@ -83,6 +85,41 @@ class StripeGateway(StripeGatewayInterface):
                 "Stripe could not cancel the Checkout Session."
             ) from error
         return cast(Mapping[str, Any], session)
+
+    async def create_refund(
+        self,
+        checkout_session_id: str,
+    ) -> StripeRefund:
+        session = await self.retrieve_checkout_session(
+            checkout_session_id
+        )
+        payment_intent = session.get("payment_intent")
+        if isinstance(payment_intent, str):
+            payment_intent_id = payment_intent
+        elif isinstance(payment_intent, Mapping):
+            payment_intent_id = payment_intent.get("id")
+        else:
+            payment_intent_id = None
+
+        if not isinstance(payment_intent_id, str) or not payment_intent_id:
+            raise StripeRefundError(
+                "The Checkout Session has no refundable PaymentIntent."
+            )
+
+        refund_params: Any = {
+            "payment_intent": payment_intent_id,
+            "reason": "requested_by_customer",
+        }
+        try:
+            refund = await self._client.v1.refunds.create_async(
+                refund_params
+            )
+        except stripe.StripeError as error:
+            raise StripeRefundError(
+                "Stripe could not refund the payment."
+            ) from error
+
+        return StripeRefund(id=refund.id, status=refund.status)
 
     def construct_webhook_event(
         self,
