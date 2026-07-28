@@ -10,6 +10,10 @@ class PaymentCreateSchema(BaseModel):
     order_id: int = Field(gt=0)
 
 
+class PaymentCancellationSchema(BaseModel):
+    checkout_session_id: str = Field(min_length=1, max_length=255)
+
+
 class PaymentItemSchema(BaseModel):
     id: int
     order_item_id: int
