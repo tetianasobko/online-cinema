@@ -39,7 +39,10 @@ class StripePaymentService:
         "checkout.session.completed",
         "checkout.session.async_payment_succeeded",
     }
-    _FAILED_EVENTS = {"checkout.session.async_payment_failed"}
+    _FAILED_EVENTS = {
+        "checkout.session.async_payment_failed",
+        "checkout.session.expired",
+    }
 
     def __init__(
         self,
