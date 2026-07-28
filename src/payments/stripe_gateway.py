@@ -54,6 +54,36 @@ class StripeGateway(StripeGatewayInterface):
 
         return StripeCheckoutSession(id=session.id, url=session.url)
 
+    async def retrieve_checkout_session(
+        self,
+        session_id: str,
+    ) -> Mapping[str, Any]:
+        try:
+            session = (
+                await self._client.v1.checkout.sessions.retrieve_async(
+                    session_id
+                )
+            )
+        except stripe.StripeError as error:
+            raise StripeCheckoutError(
+                "Stripe could not retrieve the Checkout Session."
+            ) from error
+        return cast(Mapping[str, Any], session)
+
+    async def expire_checkout_session(
+        self,
+        session_id: str,
+    ) -> Mapping[str, Any]:
+        try:
+            session = await self._client.v1.checkout.sessions.expire_async(
+                session_id
+            )
+        except stripe.StripeError as error:
+            raise StripeCheckoutError(
+                "Stripe could not cancel the Checkout Session."
+            ) from error
+        return cast(Mapping[str, Any], session)
+
     def construct_webhook_event(
         self,
         *,
