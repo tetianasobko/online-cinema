@@ -24,12 +24,15 @@ from payments.exceptions import (
     OrderItemUnavailableError,
     OrderNotPayableError,
     PaymentAmountMismatchError,
+    PaymentNotFoundError,
+    PaymentNotRefundableError,
     PaymentOrderNotFoundError,
 )
 from payments.interfaces import (
     PaymentEmailConfirmation,
     StripeCheckoutSession,
     StripeGatewayInterface,
+    StripeRefund,
     WebhookProcessingResult,
 )
 
@@ -136,6 +139,34 @@ class StripePaymentService:
             )
 
         await self._gateway.expire_checkout_session(session_id)
+
+    async def request_refund(
+        self,
+        *,
+        db: AsyncSession,
+        user: UserModel,
+        payment_id: int,
+    ) -> StripeRefund:
+        payment = await db.scalar(
+            select(PaymentModel).where(
+                PaymentModel.id == payment_id,
+                PaymentModel.user_id == user.id,
+            )
+        )
+        if payment is None:
+            raise PaymentNotFoundError("Payment not found.")
+        if payment.status != PaymentStatusEnum.SUCCESSFUL:
+            raise PaymentNotRefundableError(
+                "Only a successful payment can be refunded."
+            )
+        if payment.external_payment_id is None:
+            raise PaymentNotRefundableError(
+                "The payment has no Stripe Checkout Session ID."
+            )
+
+        return await self._gateway.create_refund(
+            payment.external_payment_id
+        )
 
     async def process_webhook_event(
         self,

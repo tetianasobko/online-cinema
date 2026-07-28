@@ -26,6 +26,14 @@ class PaymentOrderNotFoundError(PaymentServiceError):
     """Raised when the user does not own the requested order."""
 
 
+class PaymentNotFoundError(PaymentServiceError):
+    """Raised when the user does not own the requested payment."""
+
+
+class PaymentNotRefundableError(PaymentServiceError):
+    """Raised when a payment cannot be refunded."""
+
+
 class OrderNotPayableError(PaymentServiceError):
     """Raised when an order cannot enter the payment flow."""
 
