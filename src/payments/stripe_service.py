@@ -46,6 +46,11 @@ class StripePaymentService:
         "checkout.session.async_payment_failed",
         "checkout.session.expired",
     }
+    _REFUND_EVENTS = {
+        "refund.created",
+        "refund.updated",
+        "refund.failed",
+    }
 
     def __init__(
         self,
@@ -175,6 +180,11 @@ class StripePaymentService:
         event: Mapping[str, Any],
     ) -> WebhookProcessingResult:
         event_type = event.get("type")
+        if event_type in self._REFUND_EVENTS:
+            return await self._process_refund_event(
+                db=db,
+                event=event,
+            )
         if (
             event_type not in self._SUCCESSFUL_EVENTS
             and event_type not in self._FAILED_EVENTS
@@ -316,6 +326,67 @@ class StripePaymentService:
             email_confirmation=email_confirmation,
         )
 
+    async def _process_refund_event(
+        self,
+        *,
+        db: AsyncSession,
+        event: Mapping[str, Any],
+    ) -> WebhookProcessingResult:
+        refund = self._get_refund(event)
+        metadata = refund.get("metadata")
+        if not isinstance(metadata, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe refund metadata is missing."
+            )
+
+        checkout_session_id = metadata.get("checkout_session_id")
+        if (
+            not isinstance(checkout_session_id, str)
+            or not checkout_session_id
+        ):
+            raise InvalidWebhookEventError(
+                "Stripe refund Checkout Session ID is missing."
+            )
+
+        payment = await db.scalar(
+            select(PaymentModel).where(
+                PaymentModel.external_payment_id == checkout_session_id
+            )
+        )
+        if payment is None:
+            raise PaymentNotFoundError("Payment not found.")
+
+        if refund.get("status") != "succeeded":
+            return WebhookProcessingResult(
+                payment_id=payment.id,
+                processed=True,
+                created=False,
+            )
+
+        refund_amount = self._get_refund_amount(refund)
+        if refund_amount != payment.amount:
+            raise PaymentAmountMismatchError(
+                "Stripe refund amount does not match the payment amount."
+            )
+        if payment.status == PaymentStatusEnum.REFUNDED:
+            return WebhookProcessingResult(
+                payment_id=payment.id,
+                processed=True,
+                created=False,
+            )
+        if payment.status != PaymentStatusEnum.SUCCESSFUL:
+            raise InvalidWebhookEventError(
+                "Only a successful payment can be marked as refunded."
+            )
+
+        payment.status = PaymentStatusEnum.REFUNDED
+        await db.commit()
+        return WebhookProcessingResult(
+            payment_id=payment.id,
+            processed=True,
+            created=False,
+        )
+
     @staticmethod
     def _get_webhook_session(
         event: Mapping[str, Any],
@@ -331,6 +402,22 @@ class StripePaymentService:
                 "Stripe Checkout Session is missing."
             )
         return session
+
+    @staticmethod
+    def _get_refund(
+        event: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        data = event.get("data")
+        if not isinstance(data, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe webhook data is missing."
+            )
+        refund = data.get("object")
+        if not isinstance(refund, Mapping):
+            raise InvalidWebhookEventError(
+                "Stripe refund is missing."
+            )
+        return refund
 
     @staticmethod
     def _get_webhook_metadata(
@@ -364,6 +451,17 @@ class StripePaymentService:
                 "Stripe payment amount is invalid."
             )
         return Decimal(amount_total) / 100
+
+    @staticmethod
+    def _get_refund_amount(
+        refund: Mapping[str, Any],
+    ) -> Decimal:
+        amount = refund.get("amount")
+        if not isinstance(amount, int) or amount < 0:
+            raise InvalidWebhookEventError(
+                "Stripe refund amount is invalid."
+            )
+        return Decimal(amount) / 100
 
     @staticmethod
     async def _revalidate_order_total(

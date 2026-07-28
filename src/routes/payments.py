@@ -256,7 +256,7 @@ async def stripe_webhook(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
         ) from error
-    except PaymentOrderNotFoundError as error:
+    except (PaymentNotFoundError, PaymentOrderNotFoundError) as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(error),
