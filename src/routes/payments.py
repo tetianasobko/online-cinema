@@ -28,6 +28,7 @@ from payments import (
     StripePaymentService,
 )
 from schemas.payments import (
+    PaymentCancellationSchema,
     PaymentCheckoutResponseSchema,
     PaymentCreateSchema,
     PaymentListSchema,
@@ -52,6 +53,48 @@ async def get_payment_cancellation() -> PaymentResultResponseSchema:
         message=(
             "Checkout was canceled. Your order remains pending, so you can "
             "try again or use a different payment method."
+        ),
+    )
+
+
+@router.post(
+    "/cancel",
+    response_model=PaymentResultResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def cancel_checkout_session(
+    data: PaymentCancellationSchema,
+    user: UserModel = Depends(get_current_user),
+    payment_service: StripePaymentService = Depends(
+        get_stripe_payment_service
+    ),
+) -> PaymentResultResponseSchema:
+    try:
+        await payment_service.cancel_checkout_session(
+            user=user,
+            session_id=data.checkout_session_id,
+        )
+    except PaymentOrderNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(error),
+        ) from error
+    except OrderNotPayableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    except StripeCheckoutError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+
+    return PaymentResultResponseSchema(
+        status="processing",
+        message=(
+            "Checkout cancellation was requested. "
+            "The payment status will be updated after Stripe confirms it."
         ),
     )
 
