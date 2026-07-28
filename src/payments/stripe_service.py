@@ -27,8 +27,10 @@ from payments.exceptions import (
     PaymentOrderNotFoundError,
 )
 from payments.interfaces import (
+    PaymentEmailConfirmation,
     StripeCheckoutSession,
     StripeGatewayInterface,
+    WebhookProcessingResult,
 )
 
 
@@ -114,20 +116,28 @@ class StripePaymentService:
         *,
         db: AsyncSession,
         event: Mapping[str, Any],
-    ) -> PaymentModel | None:
+    ) -> WebhookProcessingResult:
         event_type = event.get("type")
         if (
             event_type not in self._SUCCESSFUL_EVENTS
             and event_type not in self._FAILED_EVENTS
         ):
-            return None
+            return WebhookProcessingResult(
+                payment_id=None,
+                processed=False,
+                created=False,
+            )
 
         session = self._get_webhook_session(event)
         if (
             event_type == "checkout.session.completed"
             and session.get("payment_status") != "paid"
         ):
-            return None
+            return WebhookProcessingResult(
+                payment_id=None,
+                processed=False,
+                created=False,
+            )
 
         session_id = session.get("id")
         if not isinstance(session_id, str) or not session_id:
@@ -141,12 +151,21 @@ class StripePaymentService:
             .where(PaymentModel.external_payment_id == session_id)
         )
         if existing_payment is not None:
-            return existing_payment
+            return WebhookProcessingResult(
+                payment_id=existing_payment.id,
+                processed=True,
+                created=False,
+            )
 
         order_id, user_id = self._get_webhook_metadata(session)
         order = await db.scalar(
             select(OrderModel)
-            .options(selectinload(OrderModel.items))
+            .options(
+                joinedload(OrderModel.user),
+                selectinload(OrderModel.items).joinedload(
+                    OrderItemModel.movie
+                ),
+            )
             .where(
                 OrderModel.id == order_id,
                 OrderModel.user_id == user_id,
@@ -209,7 +228,25 @@ class StripePaymentService:
                 "The Stripe payment could not be saved."
             ) from error
 
-        return payment
+        email_confirmation = None
+        if payment_status == PaymentStatusEnum.SUCCESSFUL:
+            email_confirmation = PaymentEmailConfirmation(
+                recipient=order.user.email,
+                order_id=order.id,
+                movie_names=tuple(
+                    item.movie.name for item in order.items
+                ),
+                total_amount=payment.amount,
+                currency=self._currency,
+                payment_date=payment.created_at,
+            )
+
+        return WebhookProcessingResult(
+            payment_id=payment.id,
+            processed=True,
+            created=True,
+            email_confirmation=email_confirmation,
+        )
 
     @staticmethod
     def _get_webhook_session(

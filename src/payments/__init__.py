@@ -11,8 +11,10 @@ from payments.exceptions import (
     StripeGatewayError,
 )
 from payments.interfaces import (
+    PaymentEmailConfirmation,
     StripeCheckoutSession,
     StripeGatewayInterface,
+    WebhookProcessingResult,
 )
 from payments.stripe_gateway import StripeGateway
 from payments.stripe_service import StripePaymentService
@@ -24,6 +26,7 @@ __all__ = [
     "OrderItemUnavailableError",
     "OrderNotPayableError",
     "PaymentAmountMismatchError",
+    "PaymentEmailConfirmation",
     "PaymentOrderNotFoundError",
     "PaymentServiceError",
     "StripeCheckoutError",
@@ -32,4 +35,5 @@ __all__ = [
     "StripeGatewayError",
     "StripeGatewayInterface",
     "StripePaymentService",
+    "WebhookProcessingResult",
 ]
