@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 
@@ -8,6 +10,24 @@ from typing import Any
 class StripeCheckoutSession:
     id: str
     url: str
+
+
+@dataclass(frozen=True)
+class PaymentEmailConfirmation:
+    recipient: str
+    order_id: int
+    movie_names: tuple[str, ...]
+    total_amount: Decimal
+    currency: str
+    payment_date: datetime
+
+
+@dataclass(frozen=True)
+class WebhookProcessingResult:
+    payment_id: int | None
+    processed: bool
+    created: bool
+    email_confirmation: PaymentEmailConfirmation | None = None
 
 
 class StripeGatewayInterface(ABC):
