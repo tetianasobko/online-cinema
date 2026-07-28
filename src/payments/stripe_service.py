@@ -114,6 +114,29 @@ class StripePaymentService:
             },
         )
 
+    async def cancel_checkout_session(
+        self,
+        *,
+        user: UserModel,
+        session_id: str,
+    ) -> None:
+        session = await self._gateway.retrieve_checkout_session(session_id)
+        _, session_user_id = self._get_webhook_metadata(session)
+        if session_user_id != user.id:
+            raise PaymentOrderNotFoundError(
+                "Checkout Session not found."
+            )
+
+        session_status = session.get("status")
+        if session_status == "expired":
+            return
+        if session_status != "open":
+            raise OrderNotPayableError(
+                "Only an open Checkout Session can be canceled."
+            )
+
+        await self._gateway.expire_checkout_session(session_id)
+
     async def process_webhook_event(
         self,
         *,
