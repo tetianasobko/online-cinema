@@ -42,6 +42,21 @@ router = APIRouter()
 
 
 @router.get(
+    "/cancel",
+    response_model=PaymentResultResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def get_payment_cancellation() -> PaymentResultResponseSchema:
+    return PaymentResultResponseSchema(
+        status="canceled",
+        message=(
+            "Checkout was canceled. Your order remains pending, so you can "
+            "try again or use a different payment method."
+        ),
+    )
+
+
+@router.get(
     "/success",
     response_model=PaymentResultResponseSchema,
     status_code=status.HTTP_200_OK,
