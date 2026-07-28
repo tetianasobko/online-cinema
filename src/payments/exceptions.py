@@ -6,6 +6,10 @@ class StripeCheckoutError(StripeGatewayError):
     """Raised when Stripe cannot create a Checkout Session."""
 
 
+class StripeRefundError(StripeGatewayError):
+    """Raised when Stripe cannot create a refund."""
+
+
 class InvalidWebhookPayloadError(StripeGatewayError):
     """Raised when a Stripe webhook payload is invalid."""
 
