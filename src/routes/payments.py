@@ -1,4 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    status,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -6,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from config import get_stripe_gateway, get_stripe_payment_service
 from database.models import PaymentModel, PaymentStatusEnum, UserModel
 from database.session import get_db
+from notifications import EmailSenderInterface, get_email_sender
 from payments import (
     InvalidWebhookEventError,
     InvalidWebhookPayloadError,
@@ -105,11 +114,13 @@ async def get_payment_history(
 )
 async def stripe_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     gateway: StripeGatewayInterface = Depends(get_stripe_gateway),
     payment_service: StripePaymentService = Depends(
         get_stripe_payment_service
     ),
+    email_sender: EmailSenderInterface = Depends(get_email_sender),
 ) -> PaymentWebhookResponseSchema:
     signature = request.headers.get("stripe-signature")
     if not signature:
@@ -124,7 +135,7 @@ async def stripe_webhook(
             payload=payload,
             signature=signature,
         )
-        payment = await payment_service.process_webhook_event(
+        result = await payment_service.process_webhook_event(
             db=db,
             event=event,
         )
@@ -148,10 +159,22 @@ async def stripe_webhook(
             detail=str(error),
         ) from error
 
+    confirmation = result.email_confirmation
+    if result.created and confirmation is not None:
+        background_tasks.add_task(
+            email_sender.send_payment_confirmation_email,
+            recipient=confirmation.recipient,
+            order_id=confirmation.order_id,
+            movie_names=list(confirmation.movie_names),
+            total_amount=confirmation.total_amount,
+            currency=confirmation.currency,
+            payment_date=confirmation.payment_date,
+        )
+
     return PaymentWebhookResponseSchema(
         status="success",
-        processed=payment is not None,
-        payment_id=payment.id if payment is not None else None,
+        processed=result.processed,
+        payment_id=result.payment_id,
     )
 
 
