@@ -109,6 +109,9 @@ class StripeGateway(StripeGatewayInterface):
         refund_params: Any = {
             "payment_intent": payment_intent_id,
             "reason": "requested_by_customer",
+            "metadata": {
+                "checkout_session_id": checkout_session_id,
+            },
         }
         try:
             refund = await self._client.v1.refunds.create_async(

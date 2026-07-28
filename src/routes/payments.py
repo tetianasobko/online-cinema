@@ -3,6 +3,7 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     HTTPException,
+    Path,
     Query,
     Request,
     status,
@@ -22,16 +23,20 @@ from payments import (
     OrderItemUnavailableError,
     OrderNotPayableError,
     PaymentAmountMismatchError,
+    PaymentNotFoundError,
+    PaymentNotRefundableError,
     PaymentOrderNotFoundError,
     StripeCheckoutError,
     StripeGatewayInterface,
     StripePaymentService,
+    StripeRefundError,
 )
 from schemas.payments import (
     PaymentCancellationSchema,
     PaymentCheckoutResponseSchema,
     PaymentCreateSchema,
     PaymentListSchema,
+    PaymentRefundResponseSchema,
     PaymentResultResponseSchema,
     PaymentSchema,
     PaymentWebhookResponseSchema,
@@ -162,6 +167,51 @@ async def get_payment_history(
             PaymentSchema.model_validate(payment)
             for payment in payments
         ]
+    )
+
+
+@router.post(
+    "/{payment_id}/refund",
+    response_model=PaymentRefundResponseSchema,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def request_payment_refund(
+    payment_id: int = Path(gt=0),
+    user: UserModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    payment_service: StripePaymentService = Depends(
+        get_stripe_payment_service
+    ),
+) -> PaymentRefundResponseSchema:
+    try:
+        refund = await payment_service.request_refund(
+            db=db,
+            user=user,
+            payment_id=payment_id,
+        )
+    except PaymentNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(error),
+        ) from error
+    except PaymentNotRefundableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    except StripeRefundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+
+    return PaymentRefundResponseSchema(
+        refund_id=refund.id,
+        status="processing",
+        message=(
+            "The refund was requested. Its status will be updated after "
+            "Stripe confirms it."
+        ),
     )
 
 

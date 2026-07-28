@@ -43,6 +43,12 @@ class PaymentCheckoutResponseSchema(BaseModel):
     checkout_url: str
 
 
+class PaymentRefundResponseSchema(BaseModel):
+    refund_id: str
+    status: str
+    message: str
+
+
 class PaymentWebhookResponseSchema(BaseModel):
     status: str
     processed: bool
