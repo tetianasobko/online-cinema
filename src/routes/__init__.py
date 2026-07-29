@@ -4,6 +4,7 @@ from routes.admin_payments import router as admin_payments_router
 from routes.carts import router as carts_router
 from routes.comment_likes import router as comment_likes_router
 from routes.comments import router as comments_router
+from routes.docs import router as docs_router
 from routes.favorites import router as favorites_router
 from routes.genres import router as genres_router
 from routes.movies import router as movies_router
@@ -24,6 +25,7 @@ __all__ = [
     "carts_router",
     "comment_likes_router",
     "comments_router",
+    "docs_router",
     "favorites_router",
     "genres_router",
     "movies_router",

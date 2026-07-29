@@ -11,6 +11,7 @@ from routes import (
     carts_router,
     comment_likes_router,
     comments_router,
+    docs_router,
     favorites_router,
     genres_router,
     movies_router,
@@ -36,9 +37,20 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="Online Cinema",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 api_version_prefix = "/api/v1"
+
+app.include_router(docs_router)
+
+
+@app.get("/health", include_in_schema=False)
+async def health_check() -> dict[str, str]:
+    return {"status": "healthy"}
+
 
 app.include_router(
     admin_carts_router,
