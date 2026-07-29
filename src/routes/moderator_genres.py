@@ -27,6 +27,13 @@ def _duplicate_genre_error(error: IntegrityError) -> HTTPException:
     "/",
     response_model=GenreManagementSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a genre",
+    description="Allow a moderator to create a uniquely named genre.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        409: {"description": "A genre with this name already exists."},
+    },
 )
 async def create_genre(
     data: GenreCreateSchema,
@@ -46,6 +53,13 @@ async def create_genre(
     "/{genre_id}",
     response_model=GenreManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a genre for management",
+    description="Return one genre for the moderator interface.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The genre was not found."},
+    },
 )
 async def get_genre(
     genre: GenreModel = Depends(get_genre_or_404),
@@ -57,6 +71,14 @@ async def get_genre(
     "/{genre_id}",
     response_model=GenreManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Update a genre",
+    description="Allow a moderator to rename an existing genre.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The genre was not found."},
+        409: {"description": "A genre with this name already exists."},
+    },
 )
 async def update_genre(
     data: GenreUpdateSchema,
@@ -75,6 +97,13 @@ async def update_genre(
 @router.delete(
     "/{genre_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a genre",
+    description="Allow a moderator to delete a genre and its movie links.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The genre was not found."},
+    },
 )
 async def delete_genre(
     genre: GenreModel = Depends(get_genre_or_404),
