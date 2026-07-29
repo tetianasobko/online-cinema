@@ -70,6 +70,18 @@ class PaymentListSchema(BaseModel):
     payments: list[PaymentSchema]
 
 
+class AdminPaymentSchema(PaymentSchema):
+    user_id: int
+
+
+class AdminPaymentListSchema(BaseModel):
+    payments: list[AdminPaymentSchema]
+    page: int
+    per_page: int
+    total_pages: int
+    total_items: int
+
+
 class PaymentCheckoutResponseSchema(BaseModel):
     checkout_session_id: str
     checkout_url: str
