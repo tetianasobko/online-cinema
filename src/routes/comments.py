@@ -30,6 +30,12 @@ router = APIRouter()
     "/movies/{movie_uuid}/comments",
     response_model=MovieCommentListSchema,
     status_code=status.HTTP_200_OK,
+    summary="List movie comments",
+    description=(
+        "Return paginated top-level comments, their replies, and like counts "
+        "for a movie."
+    ),
+    responses={404: {"description": "The movie was not found."}},
 )
 async def get_movie_comments(
     movie_id: int = Depends(get_movie_id_or_404),
@@ -107,6 +113,12 @@ async def get_movie_comments(
     "/movies/{movie_uuid}/comments",
     response_model=MovieCommentSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Write a movie comment",
+    description="Create a top-level comment on an existing movie.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+    },
 )
 async def create_movie_comment(
     data: MovieCommentCreateSchema,
@@ -136,6 +148,15 @@ async def create_movie_comment(
     "/comments/{comment_id}/replies",
     response_model=MovieCommentReplySchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Reply to a comment",
+    description=(
+        "Reply to a top-level comment and notify its author when appropriate."
+    ),
+    responses={
+        400: {"description": "Nested replies are not supported."},
+        401: {"description": "Authentication is required."},
+        404: {"description": "The parent comment was not found."},
+    },
 )
 async def create_comment_reply(
     comment_id: int,
