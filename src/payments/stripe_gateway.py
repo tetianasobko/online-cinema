@@ -1,5 +1,5 @@
 from collections.abc import Mapping, Sequence
-from typing import Any, cast
+from typing import Any
 
 import stripe
 
@@ -70,7 +70,7 @@ class StripeGateway(StripeGatewayInterface):
             raise StripeCheckoutError(
                 "Stripe could not retrieve the Checkout Session."
             ) from error
-        return cast(Mapping[str, Any], session)
+        return session.to_dict()
 
     async def expire_checkout_session(
         self,
@@ -84,7 +84,7 @@ class StripeGateway(StripeGatewayInterface):
             raise StripeCheckoutError(
                 "Stripe could not cancel the Checkout Session."
             ) from error
-        return cast(Mapping[str, Any], session)
+        return session.to_dict()
 
     async def create_refund(
         self,
