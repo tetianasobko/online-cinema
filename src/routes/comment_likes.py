@@ -48,6 +48,13 @@ async def _comment_like_exists(
     "/comments/{comment_id}/likes",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Like a comment",
+    description="Like a comment and notify its author when appropriate.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The comment was not found."},
+        409: {"description": "The comment is already liked."},
+    },
 )
 async def like_comment(
     comment_id: int,
@@ -84,6 +91,12 @@ async def like_comment(
     "/comments/{comment_id}/likes",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Remove a comment like",
+    description="Remove the authenticated user's like from a comment.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The comment or like was not found."},
+    },
 )
 async def unlike_comment(
     comment_id: int,
