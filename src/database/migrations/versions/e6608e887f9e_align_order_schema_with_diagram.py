@@ -20,9 +20,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    is_postgresql = op.get_bind().dialect.name == "postgresql"
     naming_convention = {
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     }
+    if is_postgresql:
+        op.execute(
+            """
+            ALTER TABLE orders
+            ALTER COLUMN status TYPE VARCHAR(50)
+            USING status::text
+            """
+        )
+        op.execute("DROP TYPE orderstatusenum")
+
     op.execute(
         """
         UPDATE orders
@@ -44,11 +55,19 @@ def upgrade() -> None:
             type_="unique",
         )
         batch_op.drop_constraint(
-            "fk_order_items_movie_id_movies",
+            (
+                "order_items_movie_id_fkey"
+                if is_postgresql
+                else "fk_order_items_movie_id_movies"
+            ),
             type_="foreignkey",
         )
         batch_op.drop_constraint(
-            "fk_order_items_order_id_orders",
+            (
+                "order_items_order_id_fkey"
+                if is_postgresql
+                else "fk_order_items_order_id_orders"
+            ),
             type_="foreignkey",
         )
         batch_op.create_foreign_key(
@@ -93,7 +112,11 @@ def upgrade() -> None:
             nullable=True,
         )
         batch_op.drop_constraint(
-            "fk_orders_user_id_users",
+            (
+                "orders_user_id_fkey"
+                if is_postgresql
+                else "fk_orders_user_id_users"
+            ),
             type_="foreignkey",
         )
         batch_op.create_foreign_key(
