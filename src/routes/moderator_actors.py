@@ -27,6 +27,13 @@ def _duplicate_actor_error() -> HTTPException:
     "/",
     response_model=ActorManagementSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create an actor",
+    description="Allow a moderator to create a uniquely named actor.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        409: {"description": "An actor with this name already exists."},
+    },
 )
 async def create_actor(
     data: ActorCreateSchema,
@@ -46,6 +53,13 @@ async def create_actor(
     "/{actor_id}",
     response_model=ActorManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get an actor for management",
+    description="Return one actor for the moderator interface.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The actor was not found."},
+    },
 )
 async def get_actor(
     actor: StarModel = Depends(get_actor_or_404),
@@ -57,6 +71,14 @@ async def get_actor(
     "/{actor_id}",
     response_model=ActorManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Update an actor",
+    description="Allow a moderator to rename an existing actor.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The actor was not found."},
+        409: {"description": "An actor with this name already exists."},
+    },
 )
 async def update_actor(
     data: ActorUpdateSchema,
@@ -75,6 +97,13 @@ async def update_actor(
 @router.delete(
     "/{actor_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an actor",
+    description="Allow a moderator to delete an actor and their movie links.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The actor was not found."},
+    },
 )
 async def delete_actor(
     actor: StarModel = Depends(get_actor_or_404),

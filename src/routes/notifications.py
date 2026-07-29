@@ -18,6 +18,12 @@ router = APIRouter()
     "/",
     response_model=NotificationListSchema,
     status_code=status.HTTP_200_OK,
+    summary="List notifications",
+    description=(
+        "Return the authenticated user's notifications with pagination and "
+        "an optional unread-only filter."
+    ),
+    responses={401: {"description": "Authentication is required."}},
 )
 async def get_notifications(
     page: int = Query(default=1, ge=1),
@@ -61,6 +67,9 @@ async def get_notifications(
     "/read-all",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Mark all notifications as read",
+    description="Mark every unread notification belonging to the user as read.",
+    responses={401: {"description": "Authentication is required."}},
 )
 async def mark_all_notifications_as_read(
     user: UserModel = Depends(get_current_user),
@@ -82,6 +91,12 @@ async def mark_all_notifications_as_read(
     "/{notification_id}/read",
     response_model=NotificationSchema,
     status_code=status.HTTP_200_OK,
+    summary="Mark a notification as read",
+    description="Mark one notification belonging to the user as read.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The notification was not found."},
+    },
 )
 async def mark_notification_as_read(
     notification_id: int,

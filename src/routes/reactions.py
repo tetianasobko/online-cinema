@@ -33,6 +33,12 @@ async def _get_reaction(
     "/{movie_uuid}/reaction",
     response_model=MovieReactionResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a movie reaction",
+    description="Return the authenticated user's like or dislike for a movie.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+    },
 )
 async def get_movie_reaction(
     movie_id: int = Depends(get_movie_id_or_404),
@@ -50,6 +56,12 @@ async def get_movie_reaction(
     "/{movie_uuid}/reaction",
     response_model=MovieReactionResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Set a movie reaction",
+    description="Add or change the authenticated user's like or dislike.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+    },
 )
 async def set_movie_reaction(
     data: MovieReactionRequestSchema,
@@ -86,6 +98,12 @@ async def set_movie_reaction(
 @router.delete(
     "/{movie_uuid}/reaction",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove a movie reaction",
+    description="Delete the authenticated user's reaction to a movie.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie or reaction was not found."},
+    },
 )
 async def remove_movie_reaction(
     movie_id: int = Depends(get_movie_id_or_404),

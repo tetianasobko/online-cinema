@@ -27,6 +27,13 @@ def _duplicate_director_error() -> HTTPException:
     "/",
     response_model=DirectorManagementSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a director",
+    description="Allow a moderator to create a uniquely named director.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        409: {"description": "A director with this name already exists."},
+    },
 )
 async def create_director(
     data: DirectorCreateSchema,
@@ -46,6 +53,13 @@ async def create_director(
     "/{director_id}",
     response_model=DirectorManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a director for management",
+    description="Return one director for the moderator interface.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The director was not found."},
+    },
 )
 async def get_director(
     director: DirectorModel = Depends(get_director_or_404),
@@ -57,6 +71,14 @@ async def get_director(
     "/{director_id}",
     response_model=DirectorManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Update a director",
+    description="Allow a moderator to rename an existing director.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The director was not found."},
+        409: {"description": "A director with this name already exists."},
+    },
 )
 async def update_director(
     data: DirectorUpdateSchema,
@@ -75,6 +97,13 @@ async def update_director(
 @router.delete(
     "/{director_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a director",
+    description="Allow a moderator to delete a director and their movie links.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The director was not found."},
+    },
 )
 async def delete_director(
     director: DirectorModel = Depends(get_director_or_404),

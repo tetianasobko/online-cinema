@@ -71,6 +71,17 @@ async def _get_certification(
     "/",
     response_model=MovieManagementSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a movie",
+    description=(
+        "Allow a moderator to create a movie and assign its certification, "
+        "genres, directors, and actors."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        409: {"description": "The movie uniqueness constraint was violated."},
+        422: {"description": "A related entity ID is invalid."},
+    },
 )
 async def create_movie(
     data: MovieCreateSchema,
@@ -116,6 +127,13 @@ async def create_movie(
     "/{movie_uuid}",
     response_model=MovieManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a movie for management",
+    description="Return complete movie data for the moderator interface.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The movie was not found."},
+    },
 )
 async def get_movie(
     movie_uuid: UUID,
@@ -129,6 +147,15 @@ async def get_movie(
     "/{movie_uuid}",
     response_model=MovieManagementSchema,
     status_code=status.HTTP_200_OK,
+    summary="Update a movie",
+    description="Allow a moderator to update movie fields and relationships.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The movie was not found."},
+        409: {"description": "The movie uniqueness constraint was violated."},
+        422: {"description": "A related entity ID is invalid."},
+    },
 )
 async def update_movie(
     movie_uuid: UUID,
@@ -172,6 +199,21 @@ async def update_movie(
     "/{movie_uuid}",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Delete a movie",
+    description=(
+        "Delete a movie only when it has not been purchased, is not present "
+        "in a user's cart, and has no blocking references."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Moderator access is required."},
+        404: {"description": "The movie was not found."},
+        409: {
+            "description": (
+                "The movie was purchased, is in a cart, or is still referenced."
+            )
+        },
+    },
 )
 async def delete_movie(
     movie_uuid: UUID,

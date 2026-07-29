@@ -22,6 +22,8 @@ router = APIRouter()
     "/",
     response_model=list[GenreWithMovieCountSchema],
     status_code=status.HTTP_200_OK,
+    summary="List genres",
+    description="Return every genre together with its number of movies.",
 )
 async def get_genres(
     db: AsyncSession = Depends(get_db),
@@ -47,6 +49,12 @@ async def get_genres(
     "/{genre_id}/movies",
     response_model=MovieListResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Browse movies in a genre",
+    description=(
+        "Return a searchable, filterable, sortable, and paginated catalog "
+        "restricted to one genre."
+    ),
+    responses={404: {"description": "The genre was not found."}},
 )
 async def get_genre_movies(
     genre_id: int,

@@ -30,6 +30,12 @@ async def _get_rating(
     "/{movie_uuid}/rating",
     response_model=MovieRatingResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a movie rating",
+    description="Return the authenticated user's rating for a movie.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+    },
 )
 async def get_movie_rating(
     movie_id: int = Depends(get_movie_id_or_404),
@@ -47,6 +53,13 @@ async def get_movie_rating(
     "/{movie_uuid}/rating",
     response_model=MovieRatingResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Set a movie rating",
+    description="Add or update a movie rating on the 10-point scale.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+        422: {"description": "The rating is outside the allowed range."},
+    },
 )
 async def set_movie_rating(
     data: MovieRatingRequestSchema,
@@ -81,6 +94,12 @@ async def set_movie_rating(
     "/{movie_uuid}/rating",
     response_model=MovieRatingResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Remove a movie rating",
+    description="Delete the authenticated user's rating for a movie.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie or rating was not found."},
+    },
 )
 async def remove_movie_rating(
     movie_id: int = Depends(get_movie_id_or_404),

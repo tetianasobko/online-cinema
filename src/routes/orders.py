@@ -33,6 +33,12 @@ router = APIRouter()
     "/",
     response_model=OrderListSchema,
     status_code=status.HTTP_200_OK,
+    summary="List the user's orders",
+    description=(
+        "Return the authenticated user's complete order history with items, "
+        "totals, timestamps, and statuses."
+    ),
+    responses={401: {"description": "Authentication is required."}},
 )
 async def get_orders(
     user: UserModel = Depends(get_current_user),
@@ -61,6 +67,13 @@ async def get_orders(
     "/{order_id}/cancel",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Cancel a pending order",
+    description="Cancel an order before payment has completed.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The order was not found."},
+        409: {"description": "A paid order requires a refund request."},
+    },
 )
 async def cancel_order(
     order: OrderModel = Depends(get_user_order_or_404),
@@ -86,6 +99,20 @@ async def cancel_order(
     "/",
     response_model=OrderCreateResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create an order",
+    description=(
+        "Create a pending order from eligible cart movies and report movies "
+        "excluded because they are unavailable, purchased, or already pending."
+    ),
+    responses={
+        400: {"description": "The cart is empty."},
+        401: {"description": "Authentication is required."},
+        409: {
+            "description": (
+                "No cart movies are eligible or the cart changed concurrently."
+            )
+        },
+    },
 )
 async def create_order(
     user: UserModel = Depends(get_current_user),

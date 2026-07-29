@@ -46,6 +46,12 @@ class BaseAppSettings(BaseSettings):
     )
     STRIPE_CURRENCY: str = os.getenv("STRIPE_CURRENCY", "usd")
 
+    DOCS_USERNAME: str = os.getenv("DOCS_USERNAME", "docs")
+    DOCS_PASSWORD: str = os.getenv(
+        "DOCS_PASSWORD",
+        "change-this-docs-password",
+    )
+
 
 class Settings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = os.getenv(

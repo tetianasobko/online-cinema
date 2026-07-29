@@ -23,6 +23,15 @@ router = APIRouter(dependencies=[Depends(require_admin)])
     "/payments",
     response_model=AdminPaymentListSchema,
     status_code=status.HTTP_200_OK,
+    summary="List all payments",
+    description=(
+        "Allow administrators to inspect paginated payments filtered by user, "
+        "date range, or status."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Administrator access is required."},
+    },
 )
 async def get_payments(
     params: Annotated[AdminPaymentFilterSchema, Query()],

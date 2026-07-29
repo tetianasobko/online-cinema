@@ -19,6 +19,13 @@ router = APIRouter(dependencies=[Depends(require_admin)])
     "/users/{user_id}/cart",
     response_model=AdminCartSchema,
     status_code=status.HTTP_200_OK,
+    summary="Inspect a user's cart",
+    description="Allow an administrator to view the contents of a user's cart.",
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Administrator access is required."},
+        404: {"description": "The user was not found."},
+    },
 )
 async def get_user_cart(
     user_id: int,

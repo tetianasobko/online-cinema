@@ -29,6 +29,11 @@ router = APIRouter()
     "/",
     response_model=MovieListResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Browse the movie catalog",
+    description=(
+        "Return a paginated movie catalog with supported search, filtering, "
+        "and sorting options."
+    ),
 )
 async def get_movies(
     params: Annotated[MovieCatalogQuerySchema, Query()],
@@ -42,6 +47,12 @@ async def get_movies(
     "/{movie_uuid}",
     response_model=MovieDetailSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get movie details",
+    description=(
+        "Return the complete movie description, related entities, reaction "
+        "counts, and rating statistics."
+    ),
+    responses={404: {"description": "The movie was not found."}},
 )
 async def get_movie_detail(
     movie_uuid: UUID,

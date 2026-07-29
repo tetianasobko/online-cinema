@@ -11,6 +11,7 @@ from routes import (
     carts_router,
     comment_likes_router,
     comments_router,
+    docs_router,
     favorites_router,
     genres_router,
     movies_router,
@@ -25,6 +26,27 @@ from routes import (
     reactions_router,
 )
 
+OPENAPI_TAGS = [
+    {"name": "accounts", "description": "Registration, authentication, and account management."},
+    {"name": "movies", "description": "Public movie catalog and movie details."},
+    {"name": "genres", "description": "Genre discovery and genre movie catalogs."},
+    {"name": "favorites", "description": "Authenticated users' favorite movies."},
+    {"name": "movie reactions", "description": "Movie likes and dislikes."},
+    {"name": "movie ratings", "description": "Movie ratings on a 10-point scale."},
+    {"name": "movie comments", "description": "Movie comments and replies."},
+    {"name": "comment likes", "description": "Likes on comments and replies."},
+    {"name": "shopping cart", "description": "Authenticated users' shopping carts."},
+    {"name": "orders", "description": "Order creation, history, and cancellation."},
+    {"name": "payments", "description": "Stripe Checkout, webhooks, history, and refunds."},
+    {"name": "notifications", "description": "Comment reply and like notifications."},
+    {"name": "admin cart inspection", "description": "Administrator cart inspection."},
+    {"name": "admin payment inspection", "description": "Administrator payment reporting."},
+    {"name": "moderator actor management", "description": "Moderator CRUD operations for actors."},
+    {"name": "moderator director management", "description": "Moderator CRUD operations for directors."},
+    {"name": "moderator genre management", "description": "Moderator CRUD operations for genres."},
+    {"name": "moderator movie management", "description": "Moderator CRUD operations for movies."},
+]
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -35,10 +57,27 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Online Cinema",
+    description=(
+        "API for browsing and purchasing movies, managing user interactions, "
+        "and administering the online cinema catalog."
+    ),
+    version="1.0.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    openapi_tags=OPENAPI_TAGS,
 )
 
 api_version_prefix = "/api/v1"
+
+app.include_router(docs_router)
+
+
+@app.get("/health", include_in_schema=False)
+async def health_check() -> dict[str, str]:
+    return {"status": "healthy"}
+
 
 app.include_router(
     admin_carts_router,
