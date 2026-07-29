@@ -1,5 +1,6 @@
 from routes.accounts import router as accounts_router
 from routes.admin_carts import router as admin_carts_router
+from routes.admin_payments import router as admin_payments_router
 from routes.carts import router as carts_router
 from routes.comment_likes import router as comment_likes_router
 from routes.comments import router as comments_router
@@ -12,12 +13,14 @@ from routes.moderator_genres import router as moderator_genres_router
 from routes.moderator_movies import router as moderator_movies_router
 from routes.notifications import router as notifications_router
 from routes.orders import router as orders_router
+from routes.payments import router as payments_router
 from routes.reactions import router as reactions_router
 from routes.ratings import router as ratings_router
 
 __all__ = [
     "accounts_router",
     "admin_carts_router",
+    "admin_payments_router",
     "carts_router",
     "comment_likes_router",
     "comments_router",
@@ -30,6 +33,7 @@ __all__ = [
     "moderator_movies_router",
     "notifications_router",
     "orders_router",
+    "payments_router",
     "reactions_router",
     "ratings_router",
 ]

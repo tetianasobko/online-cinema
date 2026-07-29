@@ -33,6 +33,11 @@ from database.models.orders import (
     OrderModel,
     OrderStatusEnum,
 )
+from database.models.payments import (
+    PaymentItemModel,
+    PaymentModel,
+    PaymentStatusEnum,
+)
 
 __all__ = [
     "ActivationTokenModel",
@@ -59,6 +64,9 @@ __all__ = [
     "OrderModel",
     "OrderStatusEnum",
     "PasswordResetTokenModel",
+    "PaymentItemModel",
+    "PaymentModel",
+    "PaymentStatusEnum",
     "RefreshTokenModel",
     "StarModel",
     "UserGroupEnum",

@@ -25,6 +25,27 @@ class BaseAppSettings(BaseSettings):
         "noreply@online-cinema.local",
     )
 
+    STRIPE_SECRET_KEY: str = os.getenv(
+        "STRIPE_SECRET_KEY",
+        "change-this-stripe-secret-key",
+    )
+    STRIPE_WEBHOOK_SECRET: str = os.getenv(
+        "STRIPE_WEBHOOK_SECRET",
+        "change-this-stripe-webhook-secret",
+    )
+    STRIPE_SUCCESS_URL: str = os.getenv(
+        "STRIPE_SUCCESS_URL",
+        (
+            "http://localhost:8000/api/v1/payments/success"
+            "?session_id={CHECKOUT_SESSION_ID}"
+        ),
+    )
+    STRIPE_CANCEL_URL: str = os.getenv(
+        "STRIPE_CANCEL_URL",
+        "http://localhost:8000/api/v1/payments/cancel",
+    )
+    STRIPE_CURRENCY: str = os.getenv("STRIPE_CURRENCY", "usd")
+
 
 class Settings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = os.getenv(

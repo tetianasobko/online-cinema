@@ -89,6 +89,9 @@ class UserModel(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    payments: Mapped[list["PaymentModel"]] = relationship(
+        back_populates="user",
+    )
     favorite_movies: Mapped[list["MovieModel"]] = relationship(
         secondary="favorite_movies",
         back_populates="favorited_by",

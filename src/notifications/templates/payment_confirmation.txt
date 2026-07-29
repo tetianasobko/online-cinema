@@ -1,0 +1,11 @@
+Your payment was completed successfully.
+
+Order: #{order_id}
+Payment date: {payment_date}
+
+Movies:
+{movie_list}
+
+Total: {total_amount} {currency}
+
+Thank you for using Online Cinema.
