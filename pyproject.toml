@@ -28,6 +28,7 @@ stripe = "15.3.1"
 httpx = "^0.28.0"
 pytest = "^8.3.0"
 pytest-asyncio = "^0.25.0"
+pytest-cov = "^7.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -36,3 +37,32 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["src/tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "functional: End-to-end functional tests",
+]
+addopts = [
+    "--strict-markers",
+    "--cov=src",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = [
+    "src/database/migrations/*",
+    "src/tests/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+]
