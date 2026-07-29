@@ -145,4 +145,4 @@ class StripeGateway(StripeGatewayInterface):
                 "Invalid Stripe webhook signature."
             ) from error
 
-        return cast(Mapping[str, Any], event)
+        return event.to_dict()
