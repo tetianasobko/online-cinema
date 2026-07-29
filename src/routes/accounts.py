@@ -43,6 +43,15 @@ PASSWORD_RESET_MESSAGE = (
     "/register",
     response_model=schemas.UserRegistrationResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Register a user",
+    description=(
+        "Create an inactive user account and send a 24-hour activation link "
+        "to the supplied email address."
+    ),
+    responses={
+        409: {"description": "An account with this email already exists."},
+        500: {"description": "The account could not be created."},
+    },
 )
 async def register_user(
     data: schemas.UserRegistrationRequestSchema,
@@ -100,6 +109,19 @@ async def register_user(
     "/activate",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Activate a user account",
+    description=(
+        "Activate an account using the email address and token contained in "
+        "the activation link."
+    ),
+    responses={
+        400: {
+            "description": (
+                "The activation token is invalid or expired, or the account "
+                "is already active."
+            )
+        },
+    },
 )
 async def activate_account(
     activation_data: Annotated[
@@ -156,6 +178,14 @@ async def activate_account(
     "/activation/resend",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Resend an activation link",
+    description=(
+        "Request a new 24-hour activation link. The response does not reveal "
+        "whether the email belongs to an inactive account."
+    ),
+    responses={
+        500: {"description": "A new activation token could not be created."},
+    },
 )
 async def resend_activation_link(
     data: schemas.ActivationResendRequestSchema,
@@ -210,6 +240,16 @@ async def resend_activation_link(
     "/login",
     response_model=schemas.UserLoginResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Log in",
+    description=(
+        "Authenticate an active user and return an access token and a "
+        "refresh token."
+    ),
+    responses={
+        401: {"description": "The email or password is incorrect."},
+        403: {"description": "The account has not been activated."},
+        500: {"description": "The refresh token could not be stored."},
+    },
 )
 async def login_user(
     data: schemas.UserLoginRequestSchema,
@@ -264,6 +304,15 @@ async def login_user(
     "/logout",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Log out",
+    description=(
+        "Delete the supplied refresh token so it can no longer be used to "
+        "obtain access tokens."
+    ),
+    responses={
+        401: {"description": "The refresh token does not exist."},
+        500: {"description": "The refresh token could not be deleted."},
+    },
 )
 async def logout_user(
     data: schemas.UserLogoutRequestSchema,
@@ -300,6 +349,19 @@ async def logout_user(
     "/refresh",
     response_model=schemas.TokenRefreshResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Refresh an access token",
+    description=(
+        "Validate a stored refresh token and issue a new short-lived access "
+        "token for an active account."
+    ),
+    responses={
+        401: {
+            "description": (
+                "The refresh token is invalid, expired, revoked, or belongs "
+                "to an unavailable account."
+            )
+        },
+    },
 )
 async def refresh_access_token(
     data: schemas.TokenRefreshRequestSchema,
@@ -348,6 +410,16 @@ async def refresh_access_token(
     "/password/change",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Change a password",
+    description=(
+        "Change the authenticated user's password after verifying the current "
+        "password."
+    ),
+    responses={
+        400: {"description": "The current password is incorrect."},
+        401: {"description": "The access token is missing, invalid, or expired."},
+        500: {"description": "The password change could not be saved."},
+    },
 )
 async def change_password(
     data: schemas.PasswordChangeRequestSchema,
@@ -401,6 +473,14 @@ async def change_password(
     "/password/reset/request",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Request a password reset",
+    description=(
+        "Send a password-reset link when the email belongs to an active "
+        "account. The response does not reveal whether the account exists."
+    ),
+    responses={
+        500: {"description": "A password-reset token could not be created."},
+    },
 )
 async def request_password_reset(
     data: schemas.PasswordResetRequestSchema,
@@ -455,6 +535,15 @@ async def request_password_reset(
     "/password/reset/complete",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Complete a password reset",
+    description=(
+        "Set a new password using a valid reset token and revoke all existing "
+        "refresh tokens for the account."
+    ),
+    responses={
+        400: {"description": "The password-reset token is invalid or expired."},
+        500: {"description": "The new password could not be saved."},
+    },
 )
 async def complete_password_reset(
     data: schemas.PasswordResetCompleteRequestSchema,
@@ -516,6 +605,17 @@ async def complete_password_reset(
     "/admin/users/{user_id}/group",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Change a user's group",
+    description=(
+        "Allow an administrator to assign the user, moderator, or admin group "
+        "to an existing account."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Administrator access is required."},
+        404: {"description": "The user or requested group was not found."},
+        500: {"description": "The group change could not be saved."},
+    },
 )
 async def update_user_group(
     user_id: int,
@@ -560,6 +660,17 @@ async def update_user_group(
     "/admin/users/{user_id}/activate",
     response_model=schemas.MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Activate a user as an administrator",
+    description=(
+        "Allow an administrator to activate an account manually and remove "
+        "its outstanding activation token."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        403: {"description": "Administrator access is required."},
+        404: {"description": "The user was not found."},
+        500: {"description": "The account could not be activated."},
+    },
 )
 async def activate_user_by_admin(
     user_id: int,
