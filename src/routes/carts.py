@@ -31,6 +31,19 @@ router = APIRouter()
     "/{movie_uuid}",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Add a movie to the cart",
+    description=(
+        "Add an available, unpurchased movie to the authenticated user's cart."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie was not found."},
+        409: {
+            "description": (
+                "The movie is unavailable, purchased, or already in the cart."
+            )
+        },
+    },
 )
 async def add_movie_to_cart(
     movie_uuid: UUID,
@@ -91,6 +104,12 @@ async def add_movie_to_cart(
     "/{movie_uuid}",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Remove a movie from the cart",
+    description="Remove one movie from the authenticated user's cart.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The movie or cart item was not found."},
+    },
 )
 async def remove_movie_from_cart(
     movie_id: int = Depends(get_movie_id_or_404),
@@ -118,6 +137,9 @@ async def remove_movie_from_cart(
     "/",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Clear the cart",
+    description="Remove every movie from the authenticated user's cart.",
+    responses={401: {"description": "Authentication is required."}},
 )
 async def clear_cart(
     cart: CartModel = Depends(get_or_create_cart),
@@ -134,6 +156,12 @@ async def clear_cart(
     "/",
     response_model=CartSchema,
     status_code=status.HTTP_200_OK,
+    summary="View the cart",
+    description=(
+        "Return cart movies with titles, prices, genres, release years, and "
+        "the calculated total."
+    ),
+    responses={401: {"description": "Authentication is required."}},
 )
 async def get_cart(
     cart: CartModel = Depends(get_or_create_cart),
