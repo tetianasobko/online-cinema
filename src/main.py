@@ -7,6 +7,7 @@ from database.session import AsyncSQLiteSessionLocal
 from routes import (
     accounts_router,
     admin_carts_router,
+    admin_payments_router,
     carts_router,
     comment_likes_router,
     comments_router,
@@ -43,6 +44,12 @@ app.include_router(
     admin_carts_router,
     prefix=f"{api_version_prefix}/admin",
     tags=["admin cart inspection"],
+)
+
+app.include_router(
+    admin_payments_router,
+    prefix=f"{api_version_prefix}/admin",
+    tags=["admin payment inspection"],
 )
 
 app.include_router(
