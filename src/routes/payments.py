@@ -51,6 +51,10 @@ router = APIRouter()
     "/cancel",
     response_model=PaymentResultResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Show checkout cancellation",
+    description=(
+        "Return the browser-facing result after a user leaves Stripe Checkout."
+    ),
 )
 async def get_payment_cancellation() -> PaymentResultResponseSchema:
     return PaymentResultResponseSchema(
@@ -66,6 +70,17 @@ async def get_payment_cancellation() -> PaymentResultResponseSchema:
     "/cancel",
     response_model=PaymentResultResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Cancel a Checkout Session",
+    description=(
+        "Request cancellation of the authenticated user's open Stripe "
+        "Checkout Session."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The related order was not found."},
+        409: {"description": "The order can no longer be canceled."},
+        502: {"description": "Stripe could not process the request."},
+    },
 )
 async def cancel_checkout_session(
     data: PaymentCancellationSchema,
@@ -108,6 +123,11 @@ async def cancel_checkout_session(
     "/success",
     response_model=PaymentResultResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Get a payment result",
+    description=(
+        "Return the current payment result after Stripe redirects the browser "
+        "back to the application."
+    ),
 )
 async def get_payment_result(
     session_id: str = Query(min_length=1, max_length=255),
@@ -144,6 +164,12 @@ async def get_payment_result(
     "/",
     response_model=PaymentListSchema,
     status_code=status.HTTP_200_OK,
+    summary="List payment history",
+    description=(
+        "Return the authenticated user's payments with dates, amounts, "
+        "statuses, and item snapshots."
+    ),
+    responses={401: {"description": "Authentication is required."}},
 )
 async def get_payment_history(
     user: UserModel = Depends(get_current_user),
@@ -174,6 +200,14 @@ async def get_payment_history(
     "/{payment_id}/refund",
     response_model=PaymentRefundResponseSchema,
     status_code=status.HTTP_202_ACCEPTED,
+    summary="Request a payment refund",
+    description="Request a Stripe refund for an eligible successful payment.",
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The payment was not found."},
+        409: {"description": "The payment is not refundable."},
+        502: {"description": "Stripe could not create the refund."},
+    },
 )
 async def request_payment_refund(
     payment_id: int = Path(gt=0),
@@ -219,6 +253,16 @@ async def request_payment_refund(
     "/webhook",
     response_model=PaymentWebhookResponseSchema,
     status_code=status.HTTP_200_OK,
+    summary="Process a Stripe webhook",
+    description=(
+        "Verify a Stripe webhook signature and apply the confirmed payment or "
+        "refund state to local records."
+    ),
+    responses={
+        400: {"description": "The payload, event, or signature is invalid."},
+        404: {"description": "The referenced payment or order was not found."},
+        409: {"description": "The amount or order state is inconsistent."},
+    },
 )
 async def stripe_webhook(
     request: Request,
@@ -290,6 +334,18 @@ async def stripe_webhook(
     "/checkout",
     response_model=PaymentCheckoutResponseSchema,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a Stripe Checkout Session",
+    description=(
+        "Revalidate a pending order and create a Stripe-hosted payment session."
+    ),
+    responses={
+        401: {"description": "Authentication is required."},
+        404: {"description": "The order was not found."},
+        409: {
+            "description": "The order or one of its items cannot be paid."
+        },
+        502: {"description": "Stripe could not create the Checkout Session."},
+    },
 )
 async def create_checkout(
     data: PaymentCreateSchema,
