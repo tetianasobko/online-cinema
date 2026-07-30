@@ -80,7 +80,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "${EC2_INSTANCE_ID}" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy ${IMAGE_URI}" \
+            --comment "Deploy Online Cinema" \
             --parameters "${PARAMETERS}" \
             --query "Command.CommandId" \
             --output text)
