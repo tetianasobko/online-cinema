@@ -20,6 +20,17 @@ class SMTPEmailSender:
     def __init__(self, settings: Settings):
         self.settings = settings
 
+    async def _send(self, message: EmailMessage) -> None:
+        await aiosmtplib.send(
+            message,
+            hostname=self.settings.EMAIL_HOST,
+            port=self.settings.EMAIL_PORT,
+            username=self.settings.EMAIL_USERNAME,
+            password=self.settings.EMAIL_PASSWORD,
+            use_tls=self.settings.EMAIL_USE_TLS,
+            start_tls=self.settings.EMAIL_START_TLS,
+        )
+
     async def send_activation_email(
         self,
         recipient: str,
@@ -34,11 +45,7 @@ class SMTPEmailSender:
             f"{activation_link}"
         )
 
-        await aiosmtplib.send(
-            message,
-            hostname=self.settings.EMAIL_HOST,
-            port=self.settings.EMAIL_PORT,
-        )
+        await self._send(message)
 
     async def send_password_reset_email(
         self,
@@ -54,11 +61,7 @@ class SMTPEmailSender:
             f"{reset_link}"
         )
 
-        await aiosmtplib.send(
-            message,
-            hostname=self.settings.EMAIL_HOST,
-            port=self.settings.EMAIL_PORT,
-        )
+        await self._send(message)
 
     async def send_payment_confirmation_email(
         self,
@@ -89,11 +92,7 @@ class SMTPEmailSender:
         message["Subject"] = "Your Online Cinema payment is confirmed"
         message.set_content(content)
 
-        await aiosmtplib.send(
-            message,
-            hostname=self.settings.EMAIL_HOST,
-            port=self.settings.EMAIL_PORT,
-        )
+        await self._send(message)
 
 
 def get_email_sender(

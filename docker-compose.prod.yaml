@@ -7,7 +7,6 @@ x-app: &app
   environment:
     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
     CELERY_BROKER_URL: redis://redis:6379/0
-    EMAIL_HOST: mailhog
 
 services:
   caddy:

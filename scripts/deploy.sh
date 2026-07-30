@@ -30,6 +30,7 @@ set_env_value() {
 
 set_env_value "ECR_IMAGE" "${IMAGE_URI}"
 set_env_value "PUBLIC_DOMAIN" "${PUBLIC_DOMAIN}"
+set_env_value "APP_BASE_URL" "https://${PUBLIC_DOMAIN}"
 set_env_value \
   "STRIPE_SUCCESS_URL" \
   "https://${PUBLIC_DOMAIN}/api/v1/payments/success?session_id={CHECKOUT_SESSION_ID}"
