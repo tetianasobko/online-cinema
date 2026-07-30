@@ -59,9 +59,22 @@ jobs:
           IMAGE_URI: ${{ steps.image.outputs.uri }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          PUBLIC_DOMAIN: ${{ vars.PUBLIC_DOMAIN || '52-209-95-128.sslip.io' }}
         run: |
+          COMPOSE_B64=$(base64 --wrap=0 docker-compose.prod.yaml)
+          CADDY_B64=$(base64 --wrap=0 Caddyfile)
+          DEPLOY_B64=$(base64 --wrap=0 scripts/deploy.sh)
+
+          DEPLOY_COMMAND="set -eu
+          install -d -m 755 /opt/online-cinema
+          printf '%s' '${COMPOSE_B64}' | base64 --decode > /opt/online-cinema/docker-compose.prod.yaml
+          printf '%s' '${CADDY_B64}' | base64 --decode > /opt/online-cinema/Caddyfile
+          printf '%s' '${DEPLOY_B64}' | base64 --decode > /opt/online-cinema/deploy.sh
+          chmod 700 /opt/online-cinema/deploy.sh
+          /opt/online-cinema/deploy.sh '${IMAGE_URI}' '${AWS_REGION}' '${PUBLIC_DOMAIN}'"
+
           PARAMETERS=$(jq -cn \
-            --arg command "/opt/online-cinema/deploy.sh ${IMAGE_URI} ${AWS_REGION}" \
+            --arg command "${DEPLOY_COMMAND}" \
             '{commands: [$command]}')
 
           COMMAND_ID=$(aws ssm send-command \
