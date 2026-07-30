@@ -20,8 +20,8 @@ moderators and administrators manage catalog and user data.
 
 ## Deployed Project
 
-- API: [Online Cinema API](http://ec2-52-209-95-128.eu-west-1.compute.amazonaws.com:8000/)
-- Swagger UI: [API documentation](http://ec2-52-209-95-128.eu-west-1.compute.amazonaws.com:8000/docs)
+- API: [Online Cinema API](https://52-209-95-128.sslip.io/)
+- Swagger UI: [API documentation](https://52-209-95-128.sslip.io/docs)
 
 Use these demo credentials to access the documentation:
 
