@@ -1,6 +1,7 @@
 import enum
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -24,6 +25,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.models.base import Base
+
+if TYPE_CHECKING:
+    from database.models.accounts import UserModel
+    from database.models.carts import CartItemModel
+    from database.models.orders import OrderItemModel
 
 
 class MovieReactionEnum(str, enum.Enum):

@@ -8,13 +8,15 @@ class EmailSenderInterface(Protocol):
         self,
         recipient: str,
         activation_link: str,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def send_password_reset_email(
         self,
         recipient: str,
         reset_link: str,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def send_payment_confirmation_email(
         self,
@@ -24,4 +26,5 @@ class EmailSenderInterface(Protocol):
         total_amount: Decimal,
         currency: str,
         payment_date: datetime,
-    ) -> None: ...
+    ) -> None:
+        ...
