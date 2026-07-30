@@ -58,6 +58,7 @@ async def register_user(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     email_sender: EmailSenderInterface = Depends(get_email_sender),
+    settings: Settings = Depends(get_settings),
 ) -> UserModel:
     email = str(data.email)
     if await db.scalar(select(UserModel).where(UserModel.email == email)):
@@ -95,7 +96,10 @@ async def register_user(
         ) from e
 
     query = urlencode({"email": user.email, "token": token.token})
-    activation_link = f"http://127.0.0.1:8000/api/v1/accounts/activate?{query}"
+    activation_link = (
+        f"{settings.APP_BASE_URL.rstrip('/')}"
+        f"/api/v1/accounts/activate?{query}"
+    )
     background_tasks.add_task(
         email_sender.send_activation_email,
         user.email,
@@ -192,6 +196,7 @@ async def resend_activation_link(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     email_sender: EmailSenderInterface = Depends(get_email_sender),
+    settings: Settings = Depends(get_settings),
 ) -> schemas.MessageResponseSchema:
     user = await db.scalar(
         select(UserModel)
@@ -223,7 +228,8 @@ async def resend_activation_link(
 
     query = urlencode({"email": user.email, "token": token.token})
     activation_link = (
-        f"http://127.0.0.1:8000/api/v1/accounts/activate?{query}"
+        f"{settings.APP_BASE_URL.rstrip('/')}"
+        f"/api/v1/accounts/activate?{query}"
     )
     background_tasks.add_task(
         email_sender.send_activation_email,
@@ -487,6 +493,7 @@ async def request_password_reset(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     email_sender: EmailSenderInterface = Depends(get_email_sender),
+    settings: Settings = Depends(get_settings),
 ) -> schemas.MessageResponseSchema:
     user = await db.scalar(
         select(UserModel)
@@ -517,7 +524,8 @@ async def request_password_reset(
 
     query = urlencode({"email": user.email, "token": reset_token.token})
     reset_link = (
-        "http://127.0.0.1:8000/api/v1/accounts/password/reset/complete"
+        f"{settings.APP_BASE_URL.rstrip('/')}"
+        "/api/v1/accounts/password/reset/complete"
         f"?{query}"
     )
     background_tasks.add_task(

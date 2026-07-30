@@ -7,6 +7,11 @@ from pydantic_settings import BaseSettings
 class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
 
+    APP_BASE_URL: str = os.getenv(
+        "APP_BASE_URL",
+        "http://127.0.0.1:8000",
+    )
+
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
         "sqlite+aiosqlite:///./online_cinema.db",
@@ -20,6 +25,14 @@ class BaseAppSettings(BaseSettings):
 
     EMAIL_HOST: str = os.getenv("EMAIL_HOST", "localhost")
     EMAIL_PORT: int = int(os.getenv("EMAIL_PORT", 1025))
+    EMAIL_USERNAME: str | None = os.getenv("EMAIL_USERNAME") or None
+    EMAIL_PASSWORD: str | None = os.getenv("EMAIL_PASSWORD") or None
+    EMAIL_USE_TLS: bool = (
+        os.getenv("EMAIL_USE_TLS", "false").lower() == "true"
+    )
+    EMAIL_START_TLS: bool = (
+        os.getenv("EMAIL_START_TLS", "false").lower() == "true"
+    )
     EMAIL_FROM: str = os.getenv(
         "EMAIL_FROM",
         "noreply@online-cinema.local",
