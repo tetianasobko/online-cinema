@@ -10,6 +10,23 @@ x-app: &app
     EMAIL_HOST: mailhog
 
 services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+
   migrations:
     <<: *app
     command: alembic upgrade head
@@ -22,7 +39,7 @@ services:
     <<: *app
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test:
         [
@@ -118,5 +135,7 @@ services:
       retries: 5
 
 volumes:
+  caddy_data:
+  caddy_config:
   postgres_data:
   pgadmin_data:
