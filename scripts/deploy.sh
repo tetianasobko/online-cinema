@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 IMAGE_URI="${1:?Image URI is required}"
 AWS_REGION="${2:?AWS region is required}"
+PUBLIC_DOMAIN="${3:-52-209-95-128.sslip.io}"
 DEPLOY_DIR="/opt/online-cinema"
 COMPOSE_FILE="docker-compose.prod.yaml"
 
@@ -16,11 +17,25 @@ aws ecr get-login-password --region "${AWS_REGION}" |
     --username AWS \
     --password-stdin "${REGISTRY}"
 
-if grep -q "^ECR_IMAGE=" .env; then
-  sed -i "s|^ECR_IMAGE=.*|ECR_IMAGE=${IMAGE_URI}|" .env
-else
-  printf "\nECR_IMAGE=%s\n" "${IMAGE_URI}" >> .env
-fi
+set_env_value() {
+  local name="$1"
+  local value="$2"
+
+  if grep -q "^${name}=" .env; then
+    sed -i "s|^${name}=.*|${name}=${value}|" .env
+  else
+    printf "\n%s=%s\n" "${name}" "${value}" >> .env
+  fi
+}
+
+set_env_value "ECR_IMAGE" "${IMAGE_URI}"
+set_env_value "PUBLIC_DOMAIN" "${PUBLIC_DOMAIN}"
+set_env_value \
+  "STRIPE_SUCCESS_URL" \
+  "https://${PUBLIC_DOMAIN}/api/v1/payments/success?session_id={CHECKOUT_SESSION_ID}"
+set_env_value \
+  "STRIPE_CANCEL_URL" \
+  "https://${PUBLIC_DOMAIN}/api/v1/payments/cancel"
 
 docker compose -f "${COMPOSE_FILE}" pull
 docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
