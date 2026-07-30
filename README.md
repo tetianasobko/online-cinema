@@ -79,6 +79,30 @@ Password: V7mQ2xL9pR4kT8wN5cH1sF6dJ3bY0aZ
 
 The API will be available at `http://localhost:8000`.
 
+### Email Configuration
+
+Local Docker development uses MailHog:
+
+- MailHog UI: `http://localhost:8025`
+- Activation and password-reset links use
+  `APP_BASE_URL=http://localhost:8000`
+
+For production, configure an authenticated SMTP provider in the EC2 `.env`:
+
+```env
+APP_BASE_URL=https://your-domain.com
+
+EMAIL_HOST=smtp.provider.example
+EMAIL_PORT=587
+EMAIL_USERNAME=your_smtp_username
+EMAIL_PASSWORD=your_smtp_password
+EMAIL_USE_TLS=false
+EMAIL_START_TLS=true
+EMAIL_FROM=your-verified-sender@example.com
+```
+
+SMTP credentials must not be committed to the repository.
+
 ### Running without Docker
 
 Install dependencies:
